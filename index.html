@@ -1,0 +1,1567 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="description" content="為你好・戀愛。一箱泡泡，兩句關心。轉動手機，讓同一批泡泡浮向新的天花板。">
+<title>戀愛 — 為你好</title>
+<style>
+:root{color-scheme:dark;font-family:"PingFang TC","Microsoft JhengHei",sans-serif;background:#000;color:#e7e4dd}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;background:#000}button,input{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid #c9c2b3;outline-offset:5px}
+main{position:fixed;inset:0;width:100%;height:100vh;height:100dvh;margin:0;padding:0;background:#000;overflow:hidden;isolation:isolate}
+.box{position:absolute;inset:0;margin:0;padding:0;border:0;border-radius:0;background:#000;overflow:hidden}
+canvas{display:block;width:100%;height:100%;touch-action:none;outline:none}
+footer{position:absolute;bottom:0;left:0;right:0;padding:18px 26px calc(20px + env(safe-area-inset-bottom));background:linear-gradient(transparent,#03030385 65%);text-align:center;text-shadow:0 1px 5px #000,0 0 9px #000;pointer-events:none}
+.panel-toggle{display:block;margin:0 0 12px auto;min-height:32px;padding:7px 9px;border:1px solid #48443b;border-radius:3px;background:#030303c9;color:#c2bcae;font-size:10px;letter-spacing:1px;pointer-events:auto}.panel-toggle:hover{border-color:#aaa18c;color:white}
+footer.controls-collapsed{padding-top:0;background:none}footer.controls-collapsed .panel-toggle{margin-bottom:0}#controlPanel[hidden]{display:none}
+.instruction{font-size:11px;letter-spacing:2px;color:#b7b1a5;margin:0 0 18px;min-height:16px;line-height:1.5}
+.actions{display:flex;align-items:center;justify-content:center;gap:10px;pointer-events:auto}.actions button{min-height:36px;border:1px solid #58544b;border-radius:3px;color:#d8d3c8;background:#171612b3;padding:7px 16px;font-size:11px;letter-spacing:2px;white-space:nowrap}.actions button.secondary{color:#999386;background:transparent;border-color:#33312c;padding-inline:12px}.actions button:disabled{opacity:.4;cursor:default}.actions button:hover{border-color:#aaa18c;color:white}
+.simulator{margin:17px auto 0;max-width:300px;display:grid;grid-template-columns:50px 1fr 50px;gap:12px;align-items:center;pointer-events:auto}.simulator label{font-size:10px;color:#8f897f;letter-spacing:1px;white-space:nowrap}.simulator label:last-of-type{text-align:right}.simulator input{width:100%;height:20px;margin:0;accent-color:#ccc4b4;cursor:ew-resize;touch-action:pan-x}
+input[type=range]{appearance:none;background:transparent}input[type=range]::-webkit-slider-runnable-track{height:1px;background:linear-gradient(to right,#5e584e,#aaa294 49%,#aaa294 51%,#5e584e)}input[type=range]::-webkit-slider-thumb{appearance:none;width:9px;height:9px;margin-top:-4px;border-radius:50%;background:#d8d1bf;box-shadow:0 0 8px #d8d1bf25}input[type=range]::-moz-range-track{height:1px;background:#625d53}input[type=range]::-moz-range-thumb{width:9px;height:9px;border:none;border-radius:50%;background:#d8d1bf}
+.help{position:fixed;inset:0;width:100%;height:100vh;height:100dvh;max-width:none;max-height:none;margin:0;border:0;border-radius:0;background:#030303ef;color:#e7e4dd;padding:38px;overflow:auto}.help[open]{display:flex;align-items:center;justify-content:center}.help::backdrop{background:transparent}.help article{max-width:330px}.help h2{font-weight:400;font-size:20px;letter-spacing:5px;margin-bottom:25px}.help p{font-size:13px;line-height:2.1;color:#bdb7ad}.help button{border:1px solid #625c51;background:transparent;color:#ded8cc;padding:10px 20px;margin-top:15px;letter-spacing:3px}.sr-only{position:absolute;top:0;left:0;margin:0;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+@media(max-height:650px){footer{padding-top:10px;padding-bottom:12px}.instruction{margin-bottom:10px}.simulator{margin-top:8px}.help[open]{align-items:flex-start}}
+@media(max-width:359px){footer{padding-inline:16px}.actions{gap:6px}.actions button{padding-inline:11px}.actions button.secondary{padding-inline:9px}}
+</style>
+</head>
+<body>
+<main>
+ <header class="sr-only"><h1>為你好<span>戀愛</span></h1><div class="status"><i></i><span id="direction">向上浮</span></div></header>
+ <section class="box" id="box" aria-label="透明泡泡箱">
+  <canvas id="bubbles" tabindex="0" aria-label="泡泡互動。左右拖曳轉動箱子；方向鍵與下方滑桿也可操作，空白鍵回正。"></canvas>
+ </section>
+ <footer>
+  <button id="toggleControls" class="panel-toggle" type="button" aria-expanded="true" aria-controls="controlPanel">收合控制</button>
+  <div id="controlPanel">
+  <p class="instruction" id="hint" role="status">讓泡泡慢慢浮起。<br>轉動這個箱子，看看關心的另一面。</p>
+  <div class="actions"><button id="preview" aria-pressed="false">播放預覽</button><button id="enable">啟用傾斜</button><button id="calibrate" class="secondary" disabled>校正</button><button id="helpButton" class="secondary" aria-label="開啟操作說明" aria-haspopup="dialog">說明</button></div>
+  <div class="simulator"><label for="tilt">−180°</label><input id="tilt" type="range" min="-180" max="180" value="0" step="1" aria-label="模擬裝置角度"><label for="tilt">180°</label><output id="angle" class="sr-only">0°</output></div>
+  </div>
+ </footer>
+</main>
+<dialog class="help" id="help" aria-labelledby="helpTitle"><article><h2 id="helpTitle">泡泡操作</h2>
+ <p>螢幕朝向自己，直式正拿手機。按「啟用傾斜」並允許感測，保持片刻，等待校正完成。</p>
+ <p>正拿時，泡泡浮進上方筆畫，逐步聚成「你眼光也太差」。倒拿時，原箱底成為新的天花板，泡泡會聚成倒拿可讀的「我怕你被傷害」。</p>
+ <p>慢轉、快轉、停住或反向都可以。泡泡會保留速度，沿箱壁滑向新的高處。側邊只是途中，也能停下來看它們聚起。</p>
+ <p>按「播放預覽」可自動轉動角度，在兩句成形後停留片刻。暫停預覽、拖曳或滑動角度時，泡泡會從當下的位置繼續飄動。</p>
+ <p>桌機左右拖曳箱子，或使用滑桿與 ← → 鍵轉動；↑ 倒拿，↓ 或空白鍵回正。手機感測需要 HTTPS 與瀏覽器授權，建議鎖定直向。</p>
+ <button id="closeHelp">讓泡泡浮起</button>
+</article></dialog>
+<p class="sr-only">為你好・戀愛。兩句文字由泡泡排列形成：你眼光也太差；我怕你被傷害。</p>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id),canvas=$('bubbles'),ctx=canvas.getContext('2d'),box=$('box');
+let W=360;
+const DT=1/120,MAX_SPEED=285,RISE_FORCE=210,BIN=16,LAYERS=1,BOUND_CELL=3;
+// Reserve each site's full radius, including the small variation within a size.
+const RADII=[2.45,4.45,7.1],MAX_RADIUS=RADII[2];
+const TAU=Math.PI*2;
+const qaMode=new URLSearchParams(location.search).has('qa'),releaseLog=[];
+const grain=n=>{const v=Math.sin(n*127.1+311.7)*43758.5453;return v-Math.floor(v);};
+const faceNormals=Array.from({length:8},(_,i)=>({x:Math.cos(i*TAU/8),y:Math.sin(i*TAU/8)}));
+const phrases=['你眼光也太差','我怕你被傷害'];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),norm=(x,y)=>Math.hypot(x,y);
+const wrap=a=>((a+180)%360+360)%360-180,diff=(a,b)=>wrap(a-b);
+let seed=47281;
+function random(){seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;return(seed>>>0)/4294967296;}
+let H=500,dpr=1,ready=false,running=true,last=0,accumulator=0,time=0,particles=[],masks=[];
+let desiredX=0,desiredY=1,poseX=0,poseY=1,gx=0,gy=1,bx=0,by=-1,angle=0,mode=0,adhesion=[1,0];
+let bodyAngle=0,omega=0,alpha=0,source='opening',moving=0,frameMs=0;
+const previewPlayback={active:false,phase:'settling',angle:0,from:0,target:0,elapsed:0,duration:6,readTime:0};
+let viewX=0,viewY=0,drawOrder=[],microBubbles=[];
+let hashCols,hashRows,heads,next,bindCols,bindRows,owners;
+let captures=0,invalidCaptures=0,maxCaptureJump=0,releases=0,wallContacts=0;
+let sensorEnabled=false,sensorReady=false,calibrating=false,latest=null,baseline=null,samples=[],sensorTimer;
+const hash=(x,y)=>clamp(y/BIN|0,0,hashRows-1)*hashCols+clamp(x/BIN|0,0,hashCols-1);
+const pixel=(x,y)=>clamp(y|0,0,Math.ceil(H)-1)*W+clamp(x|0,0,W-1);
+// Stroke paths are layout guides only; they are never painted on the scene.
+// Keeping their corners explicit makes the bubble lettering font-independent.
+// More circles, with the existing radii and approximately the same size mix.
+// This whole pool participates in both phrases; none are spawned on a turn.
+const SIZE_COUNTS=[49,250,51];
+const GLYPH_STROKES={
+ '你':[
+  [[27,8],[10,39]],[[20,30],[20,91]],[[49,9],[35,33]],
+  [[43,25],[89,25],[81,40]],[[62,39],[62,86],[53,92]],
+  [[46,50],[34,77]],[[77,50],[91,77]]],
+ '眼':[
+  [[12,14],[12,86]],[[12,14],[36,14],[36,86]],[[13,38],[35,38]],
+  [[13,62],[35,62]],[[13,86],[35,86]],
+  [[52,14],[86,14],[86,48]],[[53,31],[85,31]],[[53,48],[85,48]],
+  [[52,14],[52,89],[67,82]],[[90,59],[73,72]],[[65,51],[74,75],[92,91]]],
+ '光':[
+  [[50,8],[50,41]],[[25,15],[33,30]],[[77,14],[68,30]],[[13,44],[89,44]],
+  [[42,48],[38,68],[27,84],[12,92]],[[61,48],[61,82],[67,90],[86,90],[91,79]]],
+ '也':[
+  [[12,38],[84,24],[81,65],[71,67]],[[50,8],[50,72]],
+  [[26,24],[26,83],[35,91],[86,91],[92,79]]],
+ '太':[
+  [[12,35],[89,35]],[[51,9],[48,48],[35,72],[12,91]],
+  [[54,44],[67,68],[91,91]],[[47,73],[59,86]]],
+ '差':[
+  [[33,8],[41,20]],[[69,8],[61,20]],[[18,26],[84,26]],
+  [[22,43],[80,43]],[[14,60],[88,60]],[[52,27],[45,61],[30,81],[12,93]],
+  [[43,76],[84,76]],[[63,77],[63,94]],[[33,94],[93,94]]],
+ '我':[
+  [[51,8],[17,18]],[[10,34],[92,34]],[[34,17],[34,87],[24,93]],
+  [[12,65],[52,50]],[[61,8],[65,44],[75,74],[91,90],[95,78]],
+  [[88,49],[70,73],[50,92]],[[79,11],[89,22]]],
+ '怕':[
+  [[25,8],[25,93]],[[13,32],[8,52]],[[35,31],[40,46]],[[64,9],[56,25]],
+  [[49,27],[49,90]],[[49,27],[89,27],[89,90]],[[50,58],[88,58]],[[50,90],[88,90]]],
+ '被':[
+  [[21,8],[28,18]],[[10,29],[38,29],[30,46],[10,65]],[[27,47],[27,93]],
+  [[32,56],[42,69]],[[42,47],[34,56]],[[57,28],[92,28],[87,41]],
+  [[57,28],[54,64],[44,92]],[[70,8],[70,52]],
+  [[59,53],[88,53],[77,75],[57,92]],[[61,58],[73,78],[95,93]]],
+ '傷':[
+  [[27,8],[10,39]],[[20,30],[20,93]],[[53,7],[41,29]],[[49,20],[93,20]],
+  [[50,34],[50,60]],[[50,34],[85,34],[85,60]],[[51,47],[84,47]],[[51,60],[84,60]],
+  [[41,72],[94,72],[89,94],[80,96]],[[60,74],[49,88],[37,95]],[[77,75],[68,89],[56,97]]],
+ '害':[
+  [[49,6],[55,15]],[[17,24],[17,37]],[[17,25],[89,25],[85,37]],
+  [[29,44],[79,44]],[[30,58],[78,58]],[[17,72],[90,72]],[[53,33],[53,70]],
+  [[29,85],[29,100]],[[29,85],[78,85],[78,100]],[[30,100],[77,100]]]
+};
+function letterSites(which,size){
+ const scale=size*.82/100,paths=[],unit=size/132;
+ // A close, staggered ceiling cluster. Individual offsets and tiny rotations
+ // keep the reading order, without a shared baseline or an empty row gutter.
+ const poses=which?
+  [[-117,2,-.025],[-2,23,.025],[113,0,-.02],[-110,108,.025],[5,137,-.02],[111,110,.025]]:
+  [[-116,0,-.035],[-1,24,.02],[114,4,-.025],[-110,102,.035],[5,133,-.025],[111,109,.02]];
+ [...phrases[which]].forEach((ch,glyph)=>{
+  const [ox,oy,tilt]=poses[glyph],cx=W/2+ox*unit,cy=(60+oy)*unit,c=Math.cos(tilt),sn=Math.sin(tilt);
+  for(const points of GLYPH_STROKES[ch]){
+   const nodes=points.map(([x,y])=>({x:cx+((x-50)*c-(y-50)*sn)*scale,y:cy+((x-50)*sn+(y-50)*c)*scale})),dist=[0];
+   for(let i=1;i<nodes.length;i++)dist.push(dist[i-1]+norm(nodes[i].x-nodes[i-1].x,nodes[i].y-nodes[i-1].y));
+   paths.push({glyph,nodes,dist,length:dist[dist.length-1],count:1,sites:[]});
+  }
+ });
+ // Reserve enough circles for each character, then fill its longest gaps.
+ // Dense box strokes must not consume the bubbles needed by open diagonals.
+ const budgets=which?[56,51,49,61,72,61]:[56,72,54,52,46,70];
+ for(let glyph=0;glyph<6;glyph++){
+  const strokes=paths.filter(p=>p.glyph===glyph);
+  for(let n=strokes.length;n<budgets[glyph];n++){
+   let best=strokes[0],score=-1;
+   for(const path of strokes){const spacing=path.length/(path.count+.25);if(spacing>score){score=spacing;best=path;}}
+   best.count++;
+  }
+ }
+ function point(path,s){
+  let i=1;while(i<path.dist.length-1&&path.dist[i]<s)i++;
+  const a=path.nodes[i-1],b=path.nodes[i],u=clamp((s-path.dist[i-1])/(path.dist[i]-path.dist[i-1]),0,1);
+  return {x:a.x+(b.x-a.x)*u,y:a.y+(b.y-a.y)*u};
+ }
+ const sites=[];
+ paths.forEach((path,stroke)=>{
+  path.stroke=stroke;
+  for(let i=0;i<path.count;i++){
+   const distance=path.count===1?path.length/2:path.length*i/(path.count-1),q=point(path,distance);
+   const site={...q,glyph:path.glyph,stroke,distance,sizeClass:1,r:RADII[1],depth:5,owner:-1,claim:-1,links:[]};
+   path.sites.push(sites.length);sites.push(site);
+  }
+ });
+ // Space near another stroke or a corner gets the smaller bubbles. Broad,
+ // open runs get the existing large bubbles, distributed across characters.
+ for(const s of sites){
+  const path=paths[s.stroke];let clearance=30;
+  for(const other of paths)if(other!==path&&other.glyph===s.glyph){
+   for(let i=1;i<other.nodes.length;i++){
+    const a=other.nodes[i-1],b=other.nodes[i],dx=b.x-a.x,dy=b.y-a.y;
+    const u=clamp(((s.x-a.x)*dx+(s.y-a.y)*dy)/(dx*dx+dy*dy),0,1);
+    clearance=Math.min(clearance,norm(s.x-a.x-u*dx,s.y-a.y-u*dy));
+   }
+  }
+  const corner=Math.min(...path.dist.slice(1,-1).map(d=>Math.abs(d-s.distance)),30);
+  const runRoom=Math.min(s.distance,path.length-s.distance);
+  s.capacity=Math.min(clearance,path.length*.42,corner+3,runRoom+2);
+ }
+ const ranked=[...sites].sort((a,b)=>a.capacity-b.capacity);
+ const smallPerGlyph=Array(6).fill(0),smallLimit=Math.ceil(SIZE_COUNTS[0]/6)+2;let small=0;
+ for(const s of ranked){
+  if(small===SIZE_COUNTS[0])break;if(smallPerGlyph[s.glyph]>=smallLimit)continue;
+  s.sizeClass=0;s.r=RADII[0];smallPerGlyph[s.glyph]++;small++;
+ }
+ const large=[];
+ for(let i=0;i<SIZE_COUNTS[2];i++){
+  let best,score=-Infinity;
+  for(const s of sites)if(s.sizeClass===1){
+   const sameGlyph=large.filter(t=>t.glyph===s.glyph).length;
+   const near=large.reduce((penalty,t)=>penalty+Math.max(0,24-norm(s.x-t.x,s.y-t.y)),0);
+   const value=s.capacity-sameGlyph*1.4-near*1.6;
+   if(value>score){score=value;best=s;}
+  }
+  best.sizeClass=2;best.r=RADII[2];large.push(best);
+ }
+ // Radius-aware rebalancing: a short segment with two small end bubbles can
+ // still have a large hole. Transfer interior bubbles from crowded runs to
+ // those holes before placing the chain, without changing the size mix.
+ const span=path=>path.sites.slice(1).reduce((sum,id,i)=>sum+sites[path.sites[i]].r+sites[id].r,0);
+ for(let pass=0;pass<100;pass++){
+  const rows=paths.map(path=>({path,span:span(path)})).sort((a,b)=>b.path.length/Math.max(1,b.span)-a.path.length/Math.max(1,a.span));
+  let transfer=null;
+  for(const row of rows){
+   if(row.path.length/Math.max(1,row.span)<.94)break;
+   let best=Infinity;
+   for(const donor of rows){
+    if(donor===row||donor.path.sites.length<=Math.max(3,donor.path.nodes.length+1))continue;
+    for(let i=1;i<donor.path.sites.length-1;i++){
+     const id=donor.path.sites[i],s=sites[id];if(s.sizeClass===2)continue;
+     const left=donor.span-2*s.r;if(donor.path.length/left>.94)continue;
+     const cost=Math.abs(row.path.length/(row.span+2*s.r)-.86)+(donor.path.glyph===row.path.glyph?0:.12);
+     if(cost<best){best=cost;transfer={from:donor.path,to:row.path,i,id};}
+    }
+   }
+   if(transfer)break;
+  }
+  if(!transfer)break;
+  const {from,to,i,id}=transfer;from.sites.splice(i,1);
+  to.sites.splice(Math.max(1,Math.floor(to.sites.length/2)),0,id);
+  sites[id].stroke=to.stroke;sites[id].glyph=to.glyph;
+ }
+ for(const path of paths)path.sites.forEach((id,i)=>{sites[id].distance=path.sites.length===1?path.length/2:path.length*i/(path.sites.length-1);});
+ // Redistribute by radius along each path, pinning explicit turns. Neighbor
+ // circles may overlap; there is no painted connecting line underneath them.
+ for(const path of paths){
+  const row=path.sites.map(i=>sites[i]);if(row.length===1)continue;
+  const pins=new Map([[0,0],[row.length-1,path.length]]);
+  for(const d of path.dist.slice(1,-1)){
+   let best=1;for(let i=1;i<row.length-1;i++)if(Math.abs(row[i].distance-d)<Math.abs(row[best].distance-d))best=i;
+   if(best<row.length-1)pins.set(best,d);
+  }
+  const stops=[...pins].sort((a,b)=>a[0]-b[0]);
+  for(let segment=1;segment<stops.length;segment++){
+   const [first,start]=stops[segment-1],[last,end]=stops[segment];let weight=0;
+   for(let i=first+1;i<=last;i++)weight+=row[i-1].r+row[i].r;
+   let travelled=0;
+   for(let i=first;i<=last;i++){
+    if(i>first)travelled+=row[i-1].r+row[i].r;
+    Object.assign(row[i],point(path,start+(end-start)*travelled/weight));
+   }
+  }
+  for(let i=1;i<path.sites.length;i++){
+   const a=path.sites[i-1],b=path.sites[i];sites[a].links.push(b);sites[b].links.push(a);
+  }
+ }
+ for(const s of sites){s.homeX=s.x;s.homeY=s.y;}
+ // Separate stroke junctions without disrupting the order within a stroke.
+ // Finish with separation alone so late pair corrections preserve black gaps.
+ for(let pass=0;pass<140;pass++){
+  if(pass<100){
+   for(const s of sites){s.x+=(s.homeX-s.x)*.025;s.y+=(s.homeY-s.y)*.025;}
+   // Keep adjacent rims in a shallow overlap instead of allowing pairs to
+   // collapse onto one point while the next part of the stroke pulls apart.
+   for(let i=0;i<sites.length;i++)for(const j of sites[i].links){
+    if(j<i)continue;
+    const a=sites[i],b=sites[j],dx=b.x-a.x,dy=b.y-a.y,d=norm(dx,dy),sum=a.r+b.r;
+    if(d<.001)continue;
+    const target=clamp(d,sum*.7,sum*.82),move=(d-target)*.28;
+    a.x+=dx/d*move;a.y+=dy/d*move;b.x-=dx/d*move;b.y-=dy/d*move;
+   }
+  }
+  for(let i=0;i<sites.length;i++)for(let j=i+1;j<sites.length;j++){
+   const a=sites[i],b=sites[j];if(a.links.includes(j))continue;
+   const dx=b.x-a.x,dy=b.y-a.y,d=norm(dx,dy),min=a.r+b.r+1.8;
+   if(d>=min)continue;
+   const nx=d>.01?dx/d:Math.cos((i+j)*2.4),ny=d>.01?dy/d:Math.sin((i+j)*2.4),move=(min-d)*.5;
+   a.x-=nx*move;a.y-=ny*move;b.x+=nx*move;b.y+=ny*move;
+  }
+ }
+ // Move the complete enlarged layout up to the ceiling, keeping the same
+ // scale in both axes and leaving the bubbles themselves at their old radii.
+ const ceilingShift=.85-Math.min(...sites.map(s=>s.y-s.r));
+ for(const s of sites){s.y+=ceilingShift;if(which){s.x=W-s.x;s.y=H-s.y;}}
+ return sites;
+}
+function buildMasks(){
+ // Preserve the enlarged glyph scale and all bubble radii in a tighter cluster.
+ const result=[],size=Math.min(132,Math.max(36,(H-24)/2.4));
+ for(let which=0;which<2;which++){
+  const sites=letterSites(which,size),height=Math.ceil(H);
+  const ink=new Uint8Array(W*height),depth=new Float32Array(ink.length),nearest=new Int32Array(ink.length).fill(-1),distances=new Float32Array(ink.length).fill(1e6);
+  let area=0,rim=0;
+  sites.forEach((s,i)=>{
+   rim=Math.max(rim,which?H-s.y:s.y);
+   for(let y=Math.max(0,Math.floor(s.y-s.r-2));y<Math.min(height,s.y+s.r+2);y++)for(let x=Math.max(0,Math.floor(s.x-s.r-2));x<Math.min(W,s.x+s.r+2);x++){
+    const k=y*W+x,d=norm(x+.5-s.x,y+.5-s.y);
+    if(d<distances[k]){distances[k]=d;nearest[k]=i;}
+    if(d<s.r){if(!ink[k])area++;ink[k]=1;depth[k]=Math.max(depth[k],s.r-d);}
+   }
+  });
+  const m={ink,depth,area,bound:0,rotation:which*180,fontSize:size,rim,sites,nearest};
+  createGlyphs(m,which);result.push(m);
+ }
+ return result;
+}
+
+// Each letter owns its pose and spring. Geometry is packed before any bubble
+// arrives: all upper letters touch the ceiling, lower letters meet real rims.
+function glyphPoints(m,b){
+ const c=Math.cos(b.tilt),sn=Math.sin(b.tilt);
+ b.points=b.sites.map(id=>{const s=m.sites[id];return {id,x:s.localX*c-s.localY*sn,y:s.localX*sn+s.localY*c,r:b.active&&s.owner>=0?particles[s.owner].r:s.r};});
+ b.left=Math.min(...b.points.map(p=>p.x-p.r));b.right=Math.max(...b.points.map(p=>p.x+p.r));
+ b.top=Math.min(...b.points.map(p=>p.y-p.r));b.bottom=Math.max(...b.points.map(p=>p.y+p.r));
+}
+function contourSeat(m,b){
+ let y=-b.top,contact=null;
+ // Circle-to-circle vertical support, not bounding boxes or a phrase-wide
+ // bottom line. This lets a lower letter nest into the open outer contour.
+ for(const a of m.glyphs.slice(0,3))for(const p of a.points)for(const q of b.points){
+  const dx=b.x+q.x-a.x-p.x,r=(p.r+q.r)*.94;
+  if(Math.abs(dx)>=r)continue;
+  const seat=a.y+p.y+Math.sqrt(r*r-dx*dx)-q.y;
+  if(seat>y){y=seat;contact={upper:a.id,upperSite:p.id,lowerSite:q.id};}
+ }
+ return {y,contact};
+}
+function createGlyphs(m,which){
+ const sign=which?-1:1,turn=[.24,.34,.28,.31,.23,.36],spring=[14,20,12,17,11,19],damping=[3.1,4,2.8,3.6,2.7,4.2];
+ m.readyAt=0;m.glyphs=Array.from({length:6},(_,id)=>{
+  const ids=m.sites.flatMap((s,i)=>s.glyph===id?[i]:[]),row=ids.map(i=>m.sites[i]);
+  const cx=(Math.min(...row.map(s=>s.x-s.r))+Math.max(...row.map(s=>s.x+s.r)))/2;
+  const cy=(Math.min(...row.map(s=>s.y-s.r))+Math.max(...row.map(s=>s.y+s.r)))/2;
+  for(const s of row){
+   s.localX=(s.x-cx)*sign;s.localY=(s.y-cy)*sign;
+   // Shared local patches occasionally peel in twos or threes. Endpoints
+   // loosen first, but neither stroke order nor one global angle schedules it.
+   const key=which*1009+s.stroke*37+Math.floor(s.distance/22)*11,patch=grain(key);
+   const edge=clamp(Math.max(Math.abs(s.localX),Math.abs(s.localY))/55,0,1);
+   s.tip=s.links.length<2;
+   s.peelAngle=s.tip?26+patch*48+grain(key+s.homeX)*9:60+patch*66+grain(s.homeX+s.homeY)*22-edge*12;
+   s.peelDelay=(s.tip?.55:1.2)+grain(key+7)*(s.tip?1.05:1.7)+grain(s.homeX*3+s.homeY)*(s.tip?.5:.9);s.releasedAt=-Infinity;
+  }
+  const b={id,sites:ids,x:which?W-cx:cx,y:which?H-cy:cy,vx:0,vy:0,tilt:0,spin:0,active:false,formedAt:null,contacts:[],turnGain:turn[id],spring:spring[id],damping:damping[id],maxTilt:.32+(id%3)*.01};
+  glyphPoints(m,b);return b;
+ });
+ for(const b of m.glyphs){
+  b.x=clamp(b.x,-b.left,W-b.right);
+  if(b.id<3)b.y=-b.top;
+  else{
+   // Prefer small angles, but allow an individual letter to turn farther
+   // when that makes room against the upper bubbles without shrinking ink.
+   const initialX=b.x;let best={score:Infinity};
+   for(const tilt of [0,-.06,.06,-.12,.12,-.2,.2,-.28,.28])for(const shift of [0,-3,3]){
+    b.tilt=tilt;glyphPoints(m,b);b.x=clamp(initialX+shift,-b.left,W-b.right);
+    const seat=contourSeat(m,b),score=seat.y+b.bottom+Math.abs(tilt)*65+Math.abs(shift)*.6;
+    if(score<best.score)best={score,x:b.x,y:seat.y,tilt};
+   }
+   Object.assign(b,{x:best.x,y:best.y,tilt:best.tilt});glyphPoints(m,b);
+  }
+  b.startX=b.x;b.startY=b.y;b.startTilt=b.tilt;
+ }
+ for(let pass=0;pass<12;pass++)glyphContacts(m);
+ for(const b of m.glyphs){b.startX=b.x;b.startY=b.y;b.vx=b.vy=b.spin=0;b.contacts=[];}
+ placeGlyphs(m);
+}
+function placeGlyphs(m){
+ const reversed=!!m.rotation;let rim=0;
+ for(const b of m.glyphs)for(const p of b.points){const s=m.sites[p.id],x=b.x+p.x,y=b.y+p.y;
+  s.x=reversed?W-x:x;s.y=reversed?H-y:y;rim=Math.max(rim,y);
+ }
+ m.rim=rim;
+}
+function glyphVelocity(m,x,y,id){
+ const b=m.glyphs[id],sign=m.rotation?-1:1,rx=(m.rotation?W-x:x)-b.x,ry=(m.rotation?H-y:y)-b.y;
+ return {x:sign*(b.vx-b.spin*ry),y:sign*(b.vy+b.spin*rx)};
+}
+function resetGlyphs(m){
+ m.readyAt=time+.35;for(const s of m.sites){s.owner=-1;s.claim=-1;}
+ for(const b of m.glyphs){Object.assign(b,{x:b.startX,y:b.startY,tilt:b.startTilt,vx:0,vy:0,spin:0,active:false,formedAt:null,contacts:[]});glyphPoints(m,b);}
+ placeGlyphs(m);
+}
+function glyphTouch(b,site,other,nx,ny,load){
+ if(!b.contacts.some(c=>c.site===site&&c.other===other))b.contacts.push({site,other,nx,ny,load});
+}
+function glyphWalls(b){
+ if(b.x+b.left<0){b.x=-b.left;if(b.vx<0)b.vx*=-.025;}
+ if(b.x+b.right>W){b.x=W-b.right;if(b.vx>0)b.vx*=-.025;}
+ if(b.id<3){
+  // The buoyant top letters pivot on their own highest rim, including the
+  // middle character. A neighboring letter cannot suspend them below it.
+  b.y=-b.top;b.vy=0;
+ }else if(b.y+b.top<0){b.y=-b.top;if(b.vy<0)b.vy*=-.025;}
+ if(b.y+b.bottom>H){b.y=H-b.bottom;if(b.vy>0)b.vy*=-.025;}
+ for(const p of b.points){
+  if(b.y+p.y-p.r<.5)glyphTouch(b,p.id,'ceiling',0,-1,.11);
+  if(b.x+p.x-p.r<.5)glyphTouch(b,p.id,'left',-1,0,.08);
+  if(b.x+p.x+p.r>W-.5)glyphTouch(b,p.id,'right',1,0,.08);
+ }
+}
+function glyphContacts(m){
+ const bodies=m.glyphs;
+ for(let pass=0;pass<4;pass++){
+  for(const b of bodies)glyphWalls(b);
+  for(let i=0;i<6;i++)for(let j=i+1;j<6;j++){
+   const a=bodies[i],b=bodies[j];
+   if(a.x+a.right+1<b.x+b.left||b.x+b.right+1<a.x+a.left||a.y+a.bottom+1<b.y+b.top||b.y+b.bottom+1<a.y+a.top)continue;
+   let hit=null;
+   for(const p of a.points)for(const q of b.points){
+    const dx=b.x+q.x-a.x-p.x,dy=b.y+q.y-a.y-p.y,r=(p.r+q.r)*(i<3&&j<3?1.02:.94),d2=dx*dx+dy*dy;
+    if(d2>(r+.03)*(r+.03))continue;
+    const d=Math.sqrt(Math.max(d2,1e-8)),overlap=r-d;
+    if(!hit||overlap>hit.overlap)hit={p,q,nx:dx/d,ny:dy/d,overlap};
+   }
+   if(!hit)continue;
+   const {p,q,nx,ny}=hit,overlap=Math.max(0,hit.overlap);
+   if(i<3&&j<3){
+    const move=Math.min(1.2,overlap/Math.max(.4,Math.abs(nx)))*.5;
+    a.x-=move;b.x+=move;
+    const closing=b.vx-a.vx;if(closing<0){a.vx+=closing*.5;b.vx-=closing*.5;}
+   }else{
+    const wa=i<3?0:.5,wb=1-wa,correction=Math.min(1.2,overlap);
+    a.x-=nx*correction*wa;a.y-=ny*correction*wa;b.x+=nx*correction*wb;b.y+=ny*correction*wb;
+    const closing=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+    if(closing<0){a.vx+=nx*closing*wa;a.vy+=ny*closing*wa;b.vx-=nx*closing*wb;b.vy-=ny*closing*wb;}
+   }
+   const load=.05+Math.min(.07,overlap*.025);
+   glyphTouch(a,p.id,q.id,nx,ny,load);glyphTouch(b,q.id,p.id,-nx,-ny,load);
+   if(pass===0){
+    // Off-center membrane pressure also nudges each letter's own rotation.
+    const armA=(p.x*ny-p.y*nx)/60,armB=(q.x*ny-q.y*nx)/60;
+    if(a.active)a.spin-=clamp(armA,-1,1)*overlap*DT*.8;if(b.active)b.spin+=clamp(armB,-1,1)*overlap*DT*.8;
+   }
+  }
+ }
+ for(const b of bodies)glyphWalls(b);
+}
+function updateGlyphs(){
+ for(let which=0;which<2;which++){
+  const m=masks[which];
+  // Changing the destination only redirects free bubbles. Old lettering
+  // keeps its owners and pose until its last individual membrane lets go.
+  if(which!==mode&&!m.bound){
+   if(m.glyphs.some(b=>b.active)||m.sites.some(s=>s.claim>=0))resetGlyphs(m);
+   continue;
+  }
+  const previous=m.glyphs.map(b=>({x:b.x,y:b.y,tilt:b.tilt})),sign=which?-1:1;
+  const relative=diff(angle,which?180:0)*Math.PI/180;
+  for(const b of m.glyphs){
+   b.contacts=[];
+   if(!b.active&&b.sites.every(id=>m.sites[id].owner>=0)){b.active=true;b.formedAt=time;}
+   if(b.active){
+    const pressure=sign*bx*(52+b.id*5),spring=(b.startX-b.x)*(6+(b.id%3));
+    const breathing=Math.sin(time*(.64+b.id*.057)+b.id*1.73)*1.8;
+    b.vx+=(pressure+spring+breathing-b.vx*(3.3+b.id*.14))*DT;
+    // Wet remnants keep leaning on their support while individual rims peel.
+    if(b.id>=3)b.vy+=(-Math.max(.2,-sign*by)*64-b.vy*3.8)*DT;
+    b.x+=b.vx*DT;b.y+=b.vy*DT;
+    const ripple=Math.sin(time*(.52+b.id*.069)+b.id*2.13)*(.0035+b.id*.0004);
+    const lean=clamp(b.startTilt-relative*b.turnGain+ripple,-b.maxTilt*.85,b.maxTilt*.85);
+    b.spin+=((lean-b.tilt)*b.spring-b.spin*b.damping-alpha*(.018+b.id*.003))*DT;
+    b.tilt+=b.spin*DT;
+    const fitted=clamp(b.tilt,-b.maxTilt,b.maxTilt);if(fitted!==b.tilt){b.tilt=fitted;b.spin*=.15;}
+   }
+   glyphPoints(m,b);
+  }
+  glyphContacts(m);placeGlyphs(m);
+  for(const b of m.glyphs){
+   const old=previous[b.id],cx=which?W-b.x:b.x,cy=which?H-b.y:b.y,ox=which?W-old.x:old.x,oy=which?H-old.y:old.y;
+   const da=b.tilt-old.tilt,c=Math.cos(da),sn=Math.sin(da);
+   for(const id of b.sites){const s=m.sites[id];if(s.owner<0)continue;const p=particles[s.owner],rx=p.x-ox,ry=p.y-oy;
+    p.x=cx+rx*c-ry*sn;p.y=cy+rx*sn+ry*c;
+    const vx=p.vx,vy=p.vy;p.vx=vx*c-vy*sn;p.vy=vx*sn+vy*c;p.anchorX=s.x;p.anchorY=s.y;
+   }
+   for(const hit of b.contacts){const owner=m.sites[hit.site].owner;if(owner>=0)press(particles[owner],hit.nx*sign,hit.ny*sign,hit.load);}
+  }
+ }
+}
+
+function configureSpace(){
+ hashCols=Math.ceil(W/BIN);hashRows=Math.ceil(H/BIN);heads=new Int32Array(hashCols*hashRows*LAYERS);
+ bindCols=Math.ceil(W/BOUND_CELL);bindRows=Math.ceil(H/BOUND_CELL);owners=new Int32Array(bindCols*bindRows).fill(-1);
+}
+function outline(p,t){
+ const points=[];
+ for(let i=0;i<48;i++){
+  const a=i*TAU/48;
+  let x=Math.cos(a)*p.aspect,y=Math.sin(a)/p.aspect;
+  if(p.squash)for(let j=0;j<8;j++){
+   // A contact plane flattens only the touching face. No free-floating
+   // shape oscillation: spring relaxation restores the original circle.
+   if(p.squash[j]<=0)continue;
+   const n=faceNormals[j],dent=Math.max(0,x*n.x+y*n.y-(1-p.squash[j]));
+   x-=n.x*dent;y-=n.y*dent;
+  }
+  points.push({x,y});
+ }
+ return points;
+}
+function initialize(){
+ configureSpace();masks=buildMasks();
+ const counts=SIZE_COUNTS;
+ const count=counts.reduce((a,b)=>a+b,0);
+ particles=[];heads.fill(-1);next=new Int32Array(count);
+ // No glyph targets influence these initial positions. The same bubbles are
+ // conserved for the entire session; depth allows bubbles to pass behind ink.
+ for(let i=0;i<count;i++){
+  const layer=0,sizeClass=i<counts[0]?0:i<counts[0]+counts[1]?1:2;
+  const r=RADII[sizeClass]*(.91+random()*.09);
+  const reach=Math.ceil((r+MAX_RADIUS)/BIN);let x,y,valid;
+  do{
+   x=10+r+random()*(W-20-2*r);y=H*.43+random()*(H*.57-12-r);valid=true;
+   const cx=x/BIN|0,cy=y/BIN|0;
+   for(let yy=Math.max(0,cy-reach);yy<=Math.min(hashRows-1,cy+reach);yy++)for(let xx=Math.max(0,cx-reach);xx<=Math.min(hashCols-1,cx+reach);xx++){
+    for(let j=heads[layer*hashCols*hashRows+yy*hashCols+xx];j>=0;j=next[j]){const q=particles[j];if(norm(x-q.x,y-q.y)<r+q.r+.1)valid=false;}
+   }
+  }while(!valid);
+  const p={id:i,x,y,vx:(random()-.5)*3,vy:-random()*3,r,layer,aim:-1,aimMode:-1,light:random(),phase:random()*Math.PI*2,bound:-1,slot:-1,anchorX:0,anchorY:0,stress:0,peel:0,cool:0,wet:0,wettingTime:.008+random()*.045,compression:0,normal:0,travel:0,releaseX:0,releaseY:0,detached:false};
+  Object.assign(p,{sizeClass,family:i%8,aspect:.996+random()*.008,sheen:random(),wobbleAmp:.8+random()*1.2,wobbleRate:.35+random()*.55,squash:new Float32Array(8),squashVelocity:new Float32Array(8),loads:new Float32Array(8)});
+  p.depth=(i*.61803398875+.23)%1;
+  particles.push(p);const k=layer*hashCols*hashRows+hash(x,y);next[i]=heads[k];heads[k]=i;
+ }
+ createMicroBubbles();
+ drawOrder=[...particles,...microBubbles].sort((a,b)=>a.depth-b.depth);ready=true;
+}
+// A small, permanent rear/front pool. These bubbles never replace letter
+// sites, respawn, or fade. The lettering envelope keeps counters and gaps free.
+function letteringEnvelopes(){
+ return masks.flatMap((m,which)=>{
+  if(which!==mode&&!m.bound)return [];
+  const left=Math.min(...m.glyphs.map(b=>b.x+b.left))-3,right=Math.max(...m.glyphs.map(b=>b.x+b.right))+3;
+  const top=Math.min(...m.glyphs.map(b=>b.y+b.top))-3,bottom=Math.max(...m.glyphs.map(b=>b.y+b.bottom))+3;
+  return [{left:which?W-right:left,right:which?W-left:right,top:which?H-bottom:top,bottom:which?H-top:bottom}];
+ });
+}
+function createMicroBubbles(){
+ const large=particles.filter(p=>p.sizeClass===2);
+ microBubbles=Array.from({length:12},(_,i)=>{
+  const r=.85+grain(i+41)*.8,near=large[(i*11)%large.length],side=i%2?1:-1;
+  let x=i<4?near.x+side*(near.r+r+3):8+grain(i+62)*(W-16);
+  let y=i<4?near.y+near.r*.6:H*(.28+grain(i+91)*.62);
+  for(const box of letteringEnvelopes())if(x>box.left-r&&x<box.right+r&&y>box.top-r&&y<box.bottom+r)y=box.bottom+r+14;
+  return {id:particles.length+i,micro:true,x:clamp(x,r+2,W-r-2),y:clamp(y,r+2,H-r-2),vx:side*2,vy:-2,r,depth:.08+grain(i+102)*.66,
+   family:i%8,light:grain(i+121),phase:grain(i+144)*TAU,sheen:grain(i+163),aspect:1,wobbleAmp:.8+grain(i+182),wobbleRate:.4+grain(i+211)*.55,
+   bound:-1,compression:0,normal:0,squash:new Float32Array(8),squashVelocity:new Float32Array(8),loads:new Float32Array(8)};
+ });
+}
+function updateMicroBubbles(){
+ const envelopes=letteringEnvelopes();
+ for(const p of microBubbles){
+  p.loads.fill(0);
+  const lift=6+p.light*5,sway=Math.sin(time*p.wobbleRate+p.phase)*(1.4+p.sheen*2)+Math.sin(time*.31+p.phase)*.8;
+  let fx=bx*lift+gy*sway,fy=by*lift-gx*sway;
+  for(const box of envelopes){
+   let dx=p.x-clamp(p.x,box.left,box.right),dy=p.y-clamp(p.y,box.top,box.bottom),d=norm(dx,dy);
+   if(d<.001){
+    const edges=[{d:p.x-box.left,x:-1,y:0},{d:box.right-p.x,x:1,y:0},{d:p.y-box.top,x:0,y:-1},{d:box.bottom-p.y,x:0,y:1}].sort((a,b)=>a.d-b.d);
+    dx=edges[0].x;dy=edges[0].y;d=0;
+   }else{dx/=d;dy/=d;}
+   // Once a bubble clears the side of the text, leave its vertical
+   // lane open: a soft avoidance halo must not trap it at a box corner.
+   const sideGap=Math.max(box.left-p.x,p.x-box.right);
+   if(sideGap>p.r+.8){dx=p.x<box.left?-1:1;dy=0;d=sideGap;}
+   const reach=20+p.r+p.sheen*18;
+   if(d<reach){const push=(reach-d)*(reach-d)*.3;fx+=dx*push;fy+=dy*push;
+    // Slide around the whole phrase, rather than threading its counters or
+    // becoming extra punctuation in the spaces between characters.
+    const leftOpen=box.left>2*p.r+3,rightOpen=W-box.right>2*p.r+3;
+    const side=!rightOpen&&leftOpen?-1:!leftOpen&&rightOpen?1:p.x<(box.left+box.right)/2?-1:1;
+    fx+=side*(16+p.light*9)*(1-d/reach);
+   }
+  }
+  for(const q of particles){
+   const dx=p.x-q.x,dy=p.y-q.y,reach=p.r+q.r+2;
+   if(Math.abs(dx)>=reach||Math.abs(dy)>=reach)continue;const d=norm(dx,dy);
+   if(d>.01&&d<reach){const push=(reach-d)*5;fx+=dx/d*push;fy+=dy/d*push;if(d<p.r+q.r)press(p,-dx/d,-dy/d,.08);}
+  }
+  for(const q of microBubbles){if(q===p)continue;const dx=p.x-q.x,dy=p.y-q.y,reach=p.r+q.r+2;
+   if(Math.abs(dx)>=reach||Math.abs(dy)>=reach)continue;const d=norm(dx,dy);
+   if(d>.01&&d<reach){fx+=dx/d*(reach-d)*8;fy+=dy/d*(reach-d)*8;}
+  }
+  const drag=Math.exp(-(.48+p.sheen*.16)*DT);
+  p.vx=(p.vx+fx*DT)*drag;p.vy=(p.vy+fy*DT)*drag;
+  const speed=norm(p.vx,p.vy);if(speed>32){p.vx*=32/speed;p.vy*=32/speed;}
+  p.x+=p.vx*DT;p.y+=p.vy*DT;walls(p);relaxShape(p);
+ }
+}
+function updateFrame(){
+ gx=desiredX;gy=desiredY;bx=-gx;by=-gy;
+ viewX+=(gx*2.2-viewX)*(1-Math.exp(-DT*5));
+ viewY+=((1-Math.abs(gy))*.8-viewY)*(1-Math.exp(-DT*5));
+ if(norm(poseX,poseY)>.08)angle=Math.atan2(poseX,poseY)*180/Math.PI;
+ const align=Math.cos(angle*Math.PI/180);
+ // Hysteresis selects the destination only. It never releases a phrase.
+ if(mode===0&&align<-.55)mode=1;else if(mode===1&&align>.55)mode=0;
+ // Only the approaching ceiling collects new lettering. Existing contacts
+ // use individual peel loads, so a sideways pause leaves incomplete strokes.
+ adhesion=[0,1].map(which=>clamp((65-Math.abs(diff(angle,which*180)))/30,0,1));
+ const current=norm(gx,gy)>.08?Math.atan2(gx,gy)*180/Math.PI:bodyAngle;
+ const target=clamp(diff(current,bodyAngle)*Math.PI/180/DT,-7,7),previous=omega;
+ omega+=(target-omega)*(1-Math.exp(-DT/.085));alpha=clamp((omega-previous)/DT,-22,22);bodyAngle=current;
+}
+function canWet(site,which){
+ return Math.abs(diff(angle,which*180))<Math.min(58,site.peelAngle-9);
+}
+function peelContact(p){
+ if(p.bound<0)return;
+ const m=masks[p.bound],s=m.sites[p.site],departure=Math.abs(diff(angle,p.bound*180));
+ const neighbors=s.links.reduce((n,id)=>n+(time-m.sites[id].releasedAt<.7?1:0),0);
+ const load=departure-s.peelAngle+(neighbors?7:0);
+ // A pause finishes only contacts already under strain. A reversal lets
+ // surviving wet films recover; released particles keep their live velocity.
+ if(load>0)p.peel+=DT*(.22+Math.min(1,load/32))*(1+neighbors*.25)/s.peelDelay;
+ else p.peel=Math.max(0,p.peel-DT*(1.1+Math.min(2,-load/20)));
+ // Each neck releases on its own as it pinches off. Buoyancy is integrated
+ // in this same physics step; rounding the remaining film must not hold it.
+ if(p.peel>=.80)release(p,'peel');
+}
+function guide(p,f){
+ // A lateral surface current aligns approaching bubbles with available
+ // stroke openings. It only changes force/velocity, never position; buoyancy
+ // remains active, and capture still requires real contour contact.
+ if(p.bound>=0)return;
+ if(p.aimMode!==mode||adhesion[mode]<.01){
+  const old=masks[p.aimMode]?.sites[p.aim];if(old?.claim===p.id)old.claim=-1;
+  p.aim=-1;p.aimMode=mode;
+ }
+ if(adhesion[mode]<.01)return;
+ const m=masks[mode],up=mode?1:-1;
+ if(time<m.readyAt)return;
+ // Each bubble approaches its own stroke site directly at the ceiling.
+ let t=m.sites[p.aim];
+ const readingY=mode?H-p.y:p.y,rewetting=readingY<m.rim+60;
+ if(t&&(t.owner>=0||!canWet(t,mode)||(!rewetting&&(t.y-p.y)*up<-p.r-2))){
+  if(t.claim===p.id)t.claim=-1;p.aim=-1;t=null;
+ }
+ if(!t){
+  let score=Infinity;
+  m.sites.forEach((site,i)=>{
+   const ahead=(site.y-p.y)*up;
+   if(site.owner>=0||site.claim>=0||site.sizeClass!==p.sizeClass||!canWet(site,mode)||(!rewetting&&ahead<-p.r-1))return;
+   const cost=Math.abs(site.x-p.x)+Math.abs(ahead)*.055;
+   if(cost<score){score=cost;p.aim=i;}
+  });
+  t=m.sites[p.aim];if(t)t.claim=p.id;
+ }
+ if(!t)return;
+ const approach=Math.pow(adhesion[mode],.2),v=glyphVelocity(m,t.x,t.y,t.glyph);
+ const ahead=(t.y-p.y)*up,far=clamp((ahead-55)/170,0,1);
+ const meander=far*(Math.sin(time*p.wobbleRate+p.phase)*(4+p.wobbleAmp*3)+Math.sin(time*.41+p.phase*1.7)*3);
+ f.x+=clamp((t.x+meander-p.x)*(10-9.2*far)-(p.vx-v.x)*(4.2-3.5*far)+v.x*.72,-280,280)*approach;
+ // Approach from just below the stroke before rising into it. Slightly
+ // different approach heights let large and medium bubbles pass around one
+ // another instead of becoming locked face-to-face while exchanging places.
+ // Only forces change: positions, radii and opacity stay continuous.
+ const lane=(p.r+12+(p.id%3)*7)*clamp((Math.abs(t.x-p.x)-p.r*.5)/24,0,1);
+ const approachY=t.y-up*lane;
+ // Balance this bubble's actual buoyancy near its film contact, so faster
+ // rise does not leave the smallest bubbles suspended below their sites.
+ if(rewetting&&ahead<55)f.y+=clamp((approachY-p.y)*12-(p.vy-v.y)*5+v.y*.72-f.y,-420,420)*adhesion[mode];
+}
+function force(p){
+ const rx=p.x-W/2,ry=p.y-H/2;
+ const sway=(Math.sin(time*p.wobbleRate+p.phase)+Math.sin(time*(p.wobbleRate*.57)+p.phase*1.9)*.35)*p.wobbleAmp*7;
+ if(p.bound>=0)return {x:0,y:0};
+ const buoyancy=RISE_FORCE*(.74+p.depth*.3+p.light*.16);
+ return {x:bx*buoyancy+clamp(.15*(alpha*ry+omega*omega*rx+2*omega*p.vy),-140,140)+gy*sway,
+ y:by*buoyancy+clamp(.15*(-alpha*rx+omega*omega*ry-2*omega*p.vx),-140,140)-gx*sway};
+}
+function hold(index,depth,p){return 88+depth*29+p.light*23;}
+function surfaceContact(p){
+ return norm(p.x-p.anchorX,p.y-p.anchorY)<Math.max(6,p.r+1.5);
+}
+function release(p,reason='contact'){
+ const m=masks[p.bound],site=m.sites[p.site],v=glyphVelocity(m,p.x,p.y,site.glyph);
+ // Convert local film velocity to free velocity, without moving the center.
+ p.vx+=v.x;p.vy+=v.y;
+ if(qaMode){releaseLog.push({time,angle,id:p.id,from:p.bound,site:p.site,glyph:site.glyph,stroke:site.stroke,tip:site.tip,reason,x:p.x,y:p.y,vx:p.vx,vy:p.vy});if(releaseLog.length>2400)releaseLog.shift();}
+ m.bound--;site.releasedAt=time;if(site.owner===p.id)site.owner=-1;if(owners[p.slot]===p.id)owners[p.slot]=-1;
+ p.bound=-1;p.slot=-1;p.stress=p.peel=0;p.cool=.35+p.light*.45;p.wet=0;p.detached=true;p.releaseX=p.x;p.releaseY=p.y;releases++;
+}
+function contact(p,dt){
+ if(p.bound>=0||p.cool>0||adhesion[mode]<.001||time<masks[mode].readyAt)return;
+ // A turned box requires separation before rewetting. At a settled ceiling,
+ // a crowded joint may briefly release a bubble; let it rewet after cooldown.
+ if(p.detached){if(norm(p.x-p.releaseX,p.y-p.releaseY)<p.r*2&&adhesion[mode]<.95)return;p.detached=false;}
+ const m=masks[mode],siteId=p.aimMode===mode?p.aim:-1,site=m.sites[siteId];
+ if(!site||site.owner>=0||site.sizeClass!==p.sizeClass||!canWet(site,mode))return;
+ const distance=norm(p.x-site.x,p.y-site.y);
+ if(distance>p.r+1.1)return;
+ // Only a bubble whose contour has reached this stroke can wet it.
+ p.wet+=dt*adhesion[mode];
+ // Viscous film contact bleeds off arrival speed over several short steps,
+ // instead of shooting through the stroke and repeatedly breaking free.
+ const drift=glyphVelocity(m,p.x,p.y,site.glyph),filmDrag=Math.exp(-30*dt*adhesion[mode]);
+ p.vx=drift.x+(p.vx-drift.x)*filmDrag;p.vy=drift.y+(p.vy-drift.y)*filmDrag;
+ const f=force(p);if(p.wet<p.wettingTime||norm(f.x,f.y)>hold(mode,site.depth,p))return;
+ const x=p.x,y=p.y;
+ p.vx-=drift.x;p.vy-=drift.y;
+ p.bound=mode;p.site=siteId;p.anchorX=site.x;p.anchorY=site.y;p.stress=p.peel=0;
+ site.owner=p.id;site.claim=-1;p.aim=-1;p.wettedMasks=(p.wettedMasks||0)|(1<<mode);m.bound++;captures++;
+ if(distance>p.r+1.1)invalidCaptures++;
+ maxCaptureJump=Math.max(maxCaptureJump,norm(p.x-x,p.y-y));
+}
+
+function press(p,nx,ny,amount){
+ const load=Math.min(.16,amount);
+ for(let j=0;j<8;j++){
+  const n=faceNormals[j],alignment=nx*n.x+ny*n.y;if(alignment<=0)continue;
+  const squared=alignment*alignment,fourth=squared*squared;
+  p.loads[j]=Math.max(p.loads[j],load*fourth*fourth);
+ }
+}
+function relaxShape(p){
+ p.compression=0;let normal=p.normal;
+ for(let j=0;j<8;j++){
+  if(p.loads[j]===0&&Math.abs(p.squash[j])<.00004&&Math.abs(p.squashVelocity[j])<.0001){p.squash[j]=p.squashVelocity[j]=0;continue;}
+  const target=p.loads[j],v=p.squashVelocity[j]+((target-p.squash[j])*76-p.squashVelocity[j]*18)*DT;
+  p.squashVelocity[j]=v;p.squash[j]=clamp(p.squash[j]+v*DT,0,.18);
+  if(p.squash[j]>p.compression){p.compression=p.squash[j];normal=j*TAU/8;}
+ }
+ if(Math.abs(normal-p.normal)>.0001)p.normal+=Math.atan2(Math.sin(normal-p.normal),Math.cos(normal-p.normal))*.09516258;
+ else p.normal=normal;
+}
+// Film and displaced air brake the last few pixels before contact. Tangential
+// velocity survives, so a bubble slides along a wall toward the new high side.
+function cushionWalls(p,f){
+ if(p.bound>=0)return;
+ // Higher rise speed needs a longer braking distance, while tangential
+ // momentum survives for a small slide along the actual screen edge.
+ const brake=(gap,speed)=>{
+  const reach=22+Math.max(0,speed)*.035;
+  return gap<reach&&speed>18?Math.min(3600,(speed*speed-18*18)/(2*Math.max(3,gap+3)))*clamp((reach-gap)/(reach-6),0,1):0;
+ };
+ f.x+=brake(p.x-p.r,-p.vx)-brake(W-p.r-p.x,p.vx);
+ f.y+=brake(p.y-p.r,-p.vy)-brake(H-p.r-p.y,p.vy);
+}
+function walls(p){
+ const left=p.r,right=W-p.r,top=p.r,bottom=H-p.r;
+ if(p.x<left){press(p,-1,0,.15+Math.abs(p.vx)*.001);p.x=left;if(p.vx<0){p.vx*=-.04;p.vy*=.995;}wallContacts++;}
+ if(p.x>right){press(p,1,0,.15+Math.abs(p.vx)*.001);p.x=right;if(p.vx>0){p.vx*=-.04;p.vy*=.995;}wallContacts++;}
+ if(p.y<top){press(p,0,-1,.15+Math.abs(p.vy)*.001);p.y=top;if(p.vy<0){p.vy*=-.04;p.vx*=.995;}wallContacts++;}
+ if(p.y>bottom){press(p,0,1,.15+Math.abs(p.vy)*.001);p.y=bottom;if(p.vy>0){p.vy*=-.04;p.vx*=.995;}wallContacts++;}
+}
+function collisions(){
+ heads.fill(-1);
+ for(const p of particles){const k=hash(p.x,p.y);next[p.id]=heads[k];heads[k]=p.id;}
+ for(const p of particles){
+  const cx=p.x/BIN|0,cy=p.y/BIN|0,reach=Math.ceil((p.r+MAX_RADIUS)/BIN);
+  for(let yy=Math.max(0,cy-reach);yy<=Math.min(hashRows-1,cy+reach);yy++)for(let xx=Math.max(0,cx-reach);xx<=Math.min(hashCols-1,cx+reach);xx++){
+   for(let j=heads[yy*hashCols+xx];j>=0;j=next[j]){
+    if(j<=p.id)continue;const q=particles[j];
+    // Inter-letter contact belongs to the independent letter bodies.
+    if(p.bound>=0&&q.bound===p.bound&&masks[p.bound].sites[p.site].glyph!==masks[q.bound].sites[q.site].glyph)continue;
+    // The box has depth: an approaching bubble can pass behind a lower stroke
+    // to reach its upstream contact. All three sizes settle into the same
+    // front surface and transmit pressure to one another.
+    const mixed=(p.bound>=0)!==(q.bound>=0);
+    if(mixed){
+     const free=p.bound<0?p:q,front=p.bound>=0?p:q,site=masks[free.aimMode]?.sites[free.aim];
+     if(site&&site.glyph!==masks[front.bound].sites[front.site].glyph)continue;
+     // Surplus bubbles continue behind the lettering to the ceiling rather
+     // than piling up in a counter or adding a false stroke to a character.
+     if(!site||norm(site.x-front.x,site.y-front.y)>free.r+front.r+.3)continue;
+    }
+    // Linked rims overlap in projection on staggered depth planes. Other
+    // strokes still collide normally and cannot fill each other's counters.
+    const pm=p.bound>=0?p.bound:p.aimMode,qm=q.bound>=0?q.bound:q.aimMode;
+    const ps=p.bound>=0?p.site:p.aim,qs=q.bound>=0?q.site:q.aim;
+    const linked=pm>=0&&pm===qm&&ps>=0&&qs>=0&&masks[pm].sites[ps].links.includes(qs);
+    // A new member of an overlapping chain approaches on a rear plane.
+    // Its neighbors exert contact pressure after it reaches the stroke, so
+    // two already settled rims cannot barricade an empty site between them.
+    if(mixed&&linked)continue;
+    const depthGap=p.bound<0&&q.bound<0?Math.abs(p.depth-q.depth)*10:0;
+    const separation=p.bound>=0&&q.bound>=0&&!linked?1.25:0;
+    const sum=(p.r+q.r)*(linked?.65:1)+separation,min=Math.sqrt(Math.max(0,sum*sum-depthGap*depthGap));
+    const dx=q.x-p.x,dy=q.y-p.y,d2=dx*dx+dy*dy;if(d2>=min*min)continue;
+    const d=Math.sqrt(Math.max(d2,1e-8)),nx=d2>1e-8?dx/d:1,ny=d2>1e-8?dy/d:0,overlap=min-d;
+    const wp=(p.bound>=0?(mixed?.006:.035):1)/(p.r*p.r),wq=(q.bound>=0?(mixed?.006:.035):1)/(q.r*q.r),total=wp+wq;
+    p.x-=nx*overlap*wp/total*.85;p.y-=ny*overlap*wp/total*.85;q.x+=nx*overlap*wq/total*.85;q.y+=ny*overlap*wq/total*.85;
+    // Compressed free bubbles push back: transmit contact pressure into
+    // velocity so a crowded ceiling can spread and level along the wall.
+    if(p.bound<0&&q.bound<0){const pressure=overlap*16/total;p.vx-=nx*pressure*wp;p.vy-=ny*pressure*wp;q.vx+=nx*pressure*wq;q.vy+=ny*pressure*wq;}
+    const approach=(q.vx-p.vx)*nx+(q.vy-p.vy)*ny;
+    if(approach<0){const impulse=-approach*.93/total;p.vx-=nx*impulse*wp;p.vy-=ny*impulse*wp;q.vx+=nx*impulse*wq;q.vy+=ny*impulse*wq;}
+    const compression=.025+overlap/min*.9+Math.max(0,-approach)*.0008;
+    if(d<p.r+q.r){press(p,nx,ny,compression);press(q,-nx,-ny,compression);}
+   }
+  }
+ }
+}
+function physics(){
+ time+=DT;updateFrame();moving=0;
+ for(const p of particles){p.oldX=p.x;p.oldY=p.y;p.loads.fill(0);}
+ updateGlyphs();
+ owners.fill(-1);
+ for(const p of particles)if(p.bound>=0){p.slot=(clamp(p.y/BOUND_CELL|0,0,bindRows-1))*bindCols+clamp(p.x/BOUND_CELL|0,0,bindCols-1);owners[p.slot]=p.id;}
+ for(const p of particles){
+  p.cool=Math.max(0,p.cool-DT);
+  peelContact(p);
+  if(p.bound>=0&&!surfaceContact(p))release(p);
+  const f=force(p);guide(p,f);
+  if(p.bound>=0){
+   const depth=masks[p.bound].sites[p.site]?.depth||1;
+   const overload=norm(f.x,f.y)-hold(p.bound,depth,p);
+   p.stress=overload>0?p.stress+overload*DT:p.stress*Math.exp(-5*DT);
+   if(p.stress>1.5+depth*.65+p.light)release(p);
+  }
+  if(p.bound>=0){
+   // Surface tension stretches from the original physical contact point.
+   // Excess load breaks it; no bubble is assigned a distant glyph target.
+   const flutter=Math.sin(time*(.65+p.wobbleRate*.9)+p.phase)*(45+p.wobbleAmp*18);
+   f.x+=(p.anchorX-p.x)*380-p.vx*12+flutter;
+   f.y+=(p.anchorY-p.y)*380-p.vy*12+Math.sin(time*(.8+p.wobbleRate*.6)+p.phase*1.4)*24;
+  }
+  cushionWalls(p,f);
+  p.vx+=f.x*DT;p.vy+=f.y*DT;
+  const drag=Math.exp(-(p.bound>=0?.72:.72+p.sheen*.28)*DT);p.vx*=drag;p.vy*=drag;
+  const speed=norm(p.vx,p.vy);if(speed>MAX_SPEED){p.vx*=MAX_SPEED/speed;p.vy*=MAX_SPEED/speed;}
+  // Integrate short steps: capture must follow the continuous physical path.
+  const steps=Math.max(1,Math.ceil(speed*DT/.8));
+  for(let i=0;i<steps;i++){p.x+=p.vx*DT/steps;p.y+=p.vy*DT/steps;walls(p);if(p.bound<0)contact(p,DT/steps);}
+ }
+ collisions();collisions();
+ for(const p of particles){walls(p);relaxShape(p);p.travel=norm(p.x-p.oldX,p.y-p.oldY)/DT;if(p.travel>2)moving++;}
+ updateMicroBubbles();
+ updateMembraneMorph();
+}
+
+// Geometry extracted from the two supplied designs. Only polygon vertices
+// and counter boundaries are retained: no source PNG, RGB pixels or image
+// reveal mask is loaded or drawn by this page.
+const DESIGN_CONTOURS=[[{"w":351,"h":349,"sourceBounds":[22,359,373,708],"contours":[[[100.0,345.5],[88.0,345.5],[81.5,341.0],[77.5,337.0],[77.5,336.0],[75.5,334.0],[72.5,328.0],[72.5,326.0],[71.5,325.0],[71.5,320.0],[70.5,319.0],[70.5,316.0],[69.5,315.0],[69.5,301.0],[70.5,300.0],[70.5,295.0],[71.5,294.0],[71.5,290.0],[72.5,289.0],[72.5,285.0],[73.5,284.0],[73.5,280.0],[74.5,279.0],[74.5,276.0],[75.5,275.0],[75.5,272.0],[76.5,271.0],[76.5,268.0],[77.5,267.0],[78.5,260.0],[80.5,256.0],[80.5,252.0],[81.5,251.0],[81.5,247.0],[82.5,246.0],[82.5,243.0],[83.5,242.0],[83.5,239.0],[84.5,238.0],[85.5,229.0],[86.5,228.0],[86.5,225.0],[87.5,224.0],[87.5,212.0],[88.5,211.0],[88.5,202.0],[87.5,201.0],[87.5,191.0],[84.5,187.0],[84.5,186.0],[82.0,183.5],[76.0,183.5],[72.5,187.0],[69.5,193.0],[69.5,195.0],[68.5,197.0],[66.5,199.0],[65.5,202.0],[62.5,205.0],[62.5,206.0],[60.5,208.0],[58.5,212.0],[56.5,214.0],[54.5,220.0],[51.5,223.0],[48.5,229.0],[42.5,235.0],[42.5,236.0],[39.5,239.0],[39.5,240.0],[30.0,249.5],[29.0,249.5],[27.0,251.5],[23.0,253.5],[18.0,253.5],[17.0,254.5],[15.0,253.5],[11.0,253.5],[7.0,251.5],[4.5,249.0],[3.5,247.0],[3.5,245.0],[2.5,244.0],[2.5,231.0],[3.5,230.0],[3.5,228.0],[4.5,226.0],[6.5,224.0],[7.5,219.0],[12.5,209.0],[14.5,207.0],[14.5,206.0],[19.5,201.0],[19.5,200.0],[26.5,193.0],[26.5,192.0],[38.0,179.5],[39.0,179.5],[52.0,166.5],[53.0,166.5],[63.0,157.5],[64.0,157.5],[83.5,138.0],[83.5,137.0],[90.5,130.0],[97.5,116.0],[97.5,114.0],[99.5,110.0],[99.5,104.0],[100.5,103.0],[100.5,83.0],[99.5,82.0],[99.5,65.0],[100.5,64.0],[100.5,60.0],[109.5,42.0],[116.0,35.5],[117.0,35.5],[124.0,29.5],[126.0,28.5],[129.0,28.5],[130.0,27.5],[133.0,27.5],[134.0,26.5],[137.0,26.5],[138.0,25.5],[142.0,25.5],[143.0,24.5],[146.0,24.5],[149.0,22.5],[154.0,21.5],[159.0,17.5],[161.0,17.5],[163.0,15.5],[165.0,15.5],[168.0,12.5],[171.0,11.5],[173.0,9.5],[179.0,6.5],[181.0,6.5],[182.0,5.5],[185.0,5.5],[188.0,3.5],[191.0,3.5],[192.0,2.5],[196.0,2.5],[197.0,3.5],[201.0,3.5],[202.0,4.5],[205.0,4.5],[209.0,6.5],[217.5,15.0],[219.5,19.0],[219.5,21.0],[220.5,22.0],[220.5,35.0],[219.5,36.0],[219.5,43.0],[218.5,44.0],[217.5,49.0],[213.5,57.0],[210.5,60.0],[208.5,65.0],[204.5,70.0],[202.5,74.0],[202.5,76.0],[197.5,84.0],[197.5,89.0],[202.0,93.5],[204.0,94.5],[212.0,94.5],[213.0,93.5],[218.0,92.5],[222.0,89.5],[224.0,88.5],[226.0,88.5],[228.0,86.5],[231.0,85.5],[240.0,77.5],[243.0,76.5],[245.0,74.5],[246.0,74.5],[257.0,66.5],[261.0,64.5],[263.0,64.5],[266.0,62.5],[271.0,61.5],[272.0,60.5],[276.0,60.5],[277.0,59.5],[281.0,59.5],[282.0,58.5],[293.0,58.5],[294.0,59.5],[297.0,59.5],[298.0,60.5],[301.0,60.5],[302.0,61.5],[305.0,61.5],[306.0,62.5],[308.0,62.5],[311.0,65.5],[312.0,65.5],[318.5,72.0],[318.5,73.0],[321.5,76.0],[325.5,84.0],[325.5,87.0],[326.5,88.0],[326.5,94.0],[325.5,95.0],[325.5,102.0],[322.5,106.0],[322.5,107.0],[320.5,109.0],[315.5,119.0],[312.0,122.5],[311.0,122.5],[304.0,128.5],[298.0,131.5],[292.0,136.5],[285.0,139.5],[283.0,141.5],[281.0,141.5],[280.0,142.5],[275.0,143.5],[272.0,146.5],[270.0,147.5],[268.0,147.5],[267.0,148.5],[265.0,148.5],[262.0,150.5],[260.0,150.5],[252.0,154.5],[250.0,156.5],[249.0,156.5],[244.5,161.0],[243.5,166.0],[242.5,167.0],[242.5,180.0],[247.5,186.0],[251.0,188.5],[253.0,188.5],[254.0,189.5],[257.0,189.5],[258.0,190.5],[264.0,190.5],[265.0,191.5],[272.0,191.5],[273.0,192.5],[276.0,192.5],[277.0,193.5],[281.0,193.5],[285.0,195.5],[290.0,196.5],[291.0,197.5],[294.0,197.5],[295.0,198.5],[300.0,199.5],[305.0,202.5],[307.0,202.5],[317.0,207.5],[319.0,209.5],[323.0,211.5],[326.0,214.5],[329.0,215.5],[332.5,219.0],[332.5,220.0],[334.5,222.0],[336.5,226.0],[340.5,230.0],[340.5,231.0],[342.5,233.0],[345.5,239.0],[345.5,241.0],[347.5,245.0],[347.5,253.0],[346.5,254.0],[346.5,257.0],[345.5,258.0],[345.5,260.0],[343.5,264.0],[332.0,275.5],[330.0,275.5],[329.0,276.5],[326.0,276.5],[325.0,277.5],[317.0,277.5],[316.0,276.5],[313.0,276.5],[307.0,273.5],[298.5,265.0],[297.5,263.0],[297.5,261.0],[296.5,260.0],[296.5,249.0],[298.5,245.0],[298.5,233.0],[297.5,232.0],[296.5,227.0],[293.5,221.0],[291.5,219.0],[291.5,218.0],[283.0,210.5],[282.0,210.5],[280.0,208.5],[277.0,207.5],[273.0,204.5],[271.0,204.5],[265.0,201.5],[260.0,201.5],[259.0,200.5],[255.0,200.5],[254.0,199.5],[247.0,199.5],[243.5,203.0],[243.5,205.0],[242.5,206.0],[242.5,212.0],[243.5,213.0],[243.5,226.0],[245.5,230.0],[245.5,234.0],[246.5,235.0],[246.5,241.0],[247.5,242.0],[247.5,247.0],[248.5,248.0],[248.5,253.0],[249.5,254.0],[249.5,260.0],[250.5,261.0],[250.5,284.0],[249.5,285.0],[249.5,291.0],[248.5,292.0],[248.5,295.0],[247.5,296.0],[247.5,299.0],[246.5,300.0],[246.5,303.0],[245.5,304.0],[245.5,306.0],[243.5,310.0],[237.5,318.0],[235.5,323.0],[230.0,328.5],[224.0,331.5],[222.0,331.5],[221.0,332.5],[219.0,332.5],[215.0,334.5],[211.0,334.5],[210.0,335.5],[205.0,335.5],[204.0,334.5],[201.0,334.5],[193.0,330.5],[190.0,330.5],[185.0,325.5],[184.0,325.5],[179.5,321.0],[179.5,320.0],[176.5,317.0],[174.5,313.0],[162.0,301.5],[156.0,298.5],[154.0,298.5],[153.0,297.5],[149.0,297.5],[148.0,296.5],[134.0,296.5],[133.0,297.5],[130.0,297.5],[126.0,299.5],[124.0,299.5],[117.5,306.0],[117.5,308.0],[116.5,309.0],[116.5,312.0],[114.5,316.0],[114.5,332.0],[111.5,338.0],[107.0,342.5],[106.0,342.5],[104.0,344.5],[101.0,344.5],[100.0,345.5]],[[261.5,142.0],[264.0,141.5],[266.0,139.5],[267.0,139.5],[270.5,136.0],[270.5,135.0],[279.5,126.0],[283.5,118.0],[283.5,107.0],[280.5,102.0],[280.5,99.0],[279.5,97.0],[275.0,92.5],[269.0,89.5],[266.0,89.5],[265.0,88.5],[249.0,88.5],[248.0,89.5],[244.0,89.5],[241.0,91.5],[238.0,91.5],[234.0,94.5],[229.0,96.5],[225.0,100.5],[224.0,100.5],[220.0,104.5],[219.0,104.5],[215.0,108.5],[214.0,108.5],[209.5,113.0],[207.5,117.0],[204.5,120.0],[204.5,121.0],[207.0,123.5],[209.0,124.5],[211.0,124.5],[219.0,130.5],[223.0,132.5],[224.0,131.5],[232.0,131.5],[236.0,133.5],[238.0,135.5],[239.0,135.5],[244.0,140.5],[248.0,142.5],[261.0,142.5],[261.5,142.0]],[[110.5,300.0],[112.0,299.5],[118.0,293.5],[120.0,293.5],[127.0,289.5],[132.0,289.5],[133.0,288.5],[135.0,288.5],[137.0,286.5],[151.0,286.5],[155.0,288.5],[158.0,288.5],[159.0,289.5],[162.0,289.5],[163.0,290.5],[165.0,290.5],[166.0,289.5],[171.0,289.5],[172.0,288.5],[178.0,288.5],[179.0,287.5],[181.0,287.5],[182.0,286.5],[184.0,286.5],[188.0,284.5],[192.0,279.5],[193.0,279.5],[195.0,277.5],[199.0,275.5],[200.5,274.0],[200.5,272.0],[205.5,267.0],[207.5,263.0],[208.5,258.0],[213.5,252.0],[213.5,250.0],[215.5,247.0],[215.5,245.0],[220.5,235.0],[220.5,232.0],[222.5,228.0],[222.5,225.0],[223.5,224.0],[223.5,221.0],[224.5,220.0],[224.5,217.0],[225.5,216.0],[225.5,183.0],[222.5,178.0],[222.5,176.0],[221.5,174.0],[219.0,171.5],[216.0,170.5],[213.5,168.0],[212.5,165.0],[209.5,161.0],[209.5,158.0],[207.5,155.0],[207.5,152.0],[206.5,151.0],[206.5,149.0],[207.5,148.0],[207.5,145.0],[209.5,142.0],[209.5,140.0],[196.0,131.5],[194.0,131.5],[192.0,133.5],[188.0,135.5],[185.0,135.5],[184.0,136.5],[176.0,136.5],[175.0,135.5],[171.0,135.5],[170.0,136.5],[165.0,136.5],[162.0,134.5],[160.0,134.5],[156.0,132.5],[154.5,131.0],[151.5,124.0],[148.5,121.0],[143.5,111.0],[142.0,109.5],[139.0,109.5],[138.0,108.5],[134.0,108.5],[132.0,109.5],[127.5,114.0],[127.5,115.0],[125.0,117.5],[124.0,117.5],[122.5,119.0],[122.5,120.0],[114.5,127.0],[113.5,129.0],[113.5,131.0],[107.5,142.0],[107.5,145.0],[110.5,149.0],[113.5,155.0],[113.5,160.0],[114.5,161.0],[114.5,169.0],[112.5,171.0],[109.5,177.0],[109.5,179.0],[108.5,180.0],[108.5,183.0],[102.5,195.0],[102.5,199.0],[101.5,200.0],[101.5,205.0],[100.5,206.0],[100.5,210.0],[99.5,211.0],[99.5,218.0],[97.5,220.0],[97.5,224.0],[96.5,225.0],[96.5,231.0],[95.5,232.0],[94.5,239.0],[93.5,240.0],[93.5,246.0],[92.5,247.0],[92.5,258.0],[91.5,259.0],[91.5,266.0],[92.5,267.0],[92.5,276.0],[93.5,277.0],[93.5,281.0],[97.5,288.0],[97.5,290.0],[101.5,295.0],[101.5,296.0],[104.0,298.5],[106.0,299.5],[109.0,299.5],[110.0,300.5],[110.5,300.0]],[[137.0,275.5],[126.0,275.5],[122.0,273.5],[117.5,269.0],[117.5,268.0],[115.5,266.0],[115.5,256.0],[117.5,253.0],[117.5,251.0],[129.0,237.5],[132.0,237.5],[138.0,234.5],[143.0,230.5],[145.0,230.5],[151.0,227.5],[156.0,222.5],[163.0,220.5],[169.5,215.0],[169.5,214.0],[171.5,212.0],[171.5,211.0],[174.5,207.0],[174.5,203.0],[175.5,202.0],[175.5,197.0],[176.5,196.0],[176.5,190.0],[175.5,189.0],[175.5,187.0],[174.5,185.0],[170.0,179.5],[168.0,178.5],[158.0,178.5],[148.0,183.5],[146.0,183.5],[144.0,184.5],[139.5,188.0],[136.5,194.0],[136.5,196.0],[133.5,201.0],[133.5,205.0],[132.0,207.5],[131.0,207.5],[129.5,206.0],[127.5,202.0],[127.5,200.0],[126.5,199.0],[126.5,196.0],[129.5,190.0],[129.5,188.0],[132.5,184.0],[133.5,181.0],[141.0,173.5],[149.0,169.5],[154.0,168.5],[155.0,167.5],[158.0,167.5],[159.0,166.5],[169.0,166.5],[183.0,173.5],[185.5,177.0],[185.5,180.0],[186.5,181.0],[186.5,183.0],[188.5,187.0],[188.5,203.0],[187.5,204.0],[187.5,208.0],[186.5,209.0],[186.5,212.0],[184.5,216.0],[182.5,218.0],[180.5,223.0],[178.5,225.0],[176.5,230.0],[174.5,232.0],[173.5,235.0],[171.5,237.0],[170.5,239.0],[170.5,241.0],[169.5,242.0],[169.5,244.0],[168.5,245.0],[168.5,247.0],[162.5,253.0],[162.5,254.0],[159.5,257.0],[159.5,258.0],[155.5,262.0],[154.5,265.0],[153.0,266.5],[150.0,267.5],[148.0,269.5],[145.0,270.5],[143.0,272.5],[137.0,275.5]]],"counters":[1,2]},{"w":333,"h":351,"sourceBounds":[376,359,709,710],"contours":[[[146.0,347.5],[138.0,347.5],[133.0,345.5],[130.0,343.5],[121.5,334.0],[118.5,327.0],[118.5,314.0],[119.5,313.0],[120.5,307.0],[126.5,299.0],[129.5,292.0],[134.5,287.0],[135.5,284.0],[141.5,275.0],[144.5,263.0],[148.5,255.0],[148.5,252.0],[150.5,247.0],[150.5,243.0],[152.5,238.0],[152.5,234.0],[153.5,233.0],[153.5,227.0],[154.5,226.0],[154.5,221.0],[155.5,220.0],[155.5,215.0],[156.5,214.0],[156.5,208.0],[157.5,207.0],[157.5,195.0],[158.5,194.0],[158.5,163.0],[159.5,162.0],[159.5,158.0],[158.5,157.0],[158.5,125.0],[157.5,124.0],[157.5,113.0],[156.5,112.0],[156.5,109.0],[155.5,108.0],[153.5,98.0],[148.0,93.5],[142.0,93.5],[136.5,98.0],[132.5,111.0],[131.5,112.0],[130.5,120.0],[129.5,121.0],[129.5,123.0],[127.5,127.0],[127.5,130.0],[126.5,131.0],[126.5,134.0],[125.5,135.0],[124.5,150.0],[123.5,151.0],[123.5,158.0],[122.5,159.0],[122.5,165.0],[123.5,166.0],[123.5,172.0],[122.5,173.0],[122.5,189.0],[123.5,190.0],[123.5,197.0],[124.5,198.0],[124.5,203.0],[125.5,204.0],[125.5,209.0],[126.5,210.0],[126.5,213.0],[127.5,214.0],[128.5,219.0],[130.5,222.0],[131.5,230.0],[132.5,231.0],[132.5,240.0],[131.5,241.0],[131.5,245.0],[129.5,250.0],[126.5,253.0],[125.5,256.0],[116.0,264.5],[114.0,264.5],[113.0,265.5],[108.0,265.5],[107.0,266.5],[100.0,266.5],[99.0,265.5],[95.0,265.5],[94.0,264.5],[87.0,264.5],[86.0,265.5],[81.0,266.5],[76.5,271.0],[72.5,279.0],[66.5,285.0],[60.5,294.0],[56.0,298.5],[48.0,300.5],[45.0,302.5],[41.0,302.5],[40.0,303.5],[38.0,303.5],[37.0,302.5],[32.0,302.5],[23.0,298.5],[15.5,291.0],[11.5,283.0],[11.5,280.0],[9.5,276.0],[9.5,262.0],[11.5,258.0],[13.5,247.0],[16.5,242.0],[16.5,239.0],[17.5,238.0],[17.5,235.0],[18.5,234.0],[19.5,229.0],[22.5,223.0],[23.5,216.0],[24.5,215.0],[24.5,211.0],[25.5,210.0],[25.5,193.0],[24.5,192.0],[24.5,188.0],[23.5,187.0],[23.5,183.0],[22.5,182.0],[20.5,172.0],[13.5,158.0],[10.5,155.0],[6.5,147.0],[5.5,142.0],[2.5,137.0],[2.5,128.0],[3.5,127.0],[4.5,116.0],[7.5,112.0],[7.5,110.0],[12.5,105.0],[13.5,102.0],[20.0,95.5],[21.0,95.5],[24.0,92.5],[27.0,91.5],[33.0,86.5],[38.0,84.5],[44.0,80.5],[48.0,76.5],[53.0,73.5],[73.0,54.5],[81.0,50.5],[86.0,46.5],[88.0,46.5],[91.0,44.5],[95.0,44.5],[96.0,43.5],[114.0,43.5],[115.0,44.5],[119.0,44.5],[130.0,51.5],[136.0,58.5],[138.0,59.5],[144.0,59.5],[146.0,58.5],[155.0,49.5],[161.0,46.5],[166.0,45.5],[186.0,35.5],[188.0,33.5],[193.0,31.5],[198.0,27.5],[201.0,26.5],[210.0,19.5],[216.0,16.5],[220.0,12.5],[232.0,6.5],[242.0,4.5],[243.0,3.5],[250.0,3.5],[251.0,2.5],[265.0,2.5],[266.0,3.5],[276.0,5.5],[286.0,10.5],[294.0,16.5],[300.5,23.0],[301.5,28.0],[306.5,37.0],[306.5,39.0],[307.5,40.0],[307.5,45.0],[308.5,46.0],[308.5,57.0],[305.5,64.0],[303.5,72.0],[296.5,83.0],[275.5,104.0],[275.5,105.0],[267.5,113.0],[263.5,119.0],[261.5,128.0],[264.5,136.0],[264.5,147.0],[261.0,154.5],[260.0,154.5],[252.0,161.5],[248.0,162.5],[245.0,164.5],[238.0,164.5],[237.0,165.5],[208.0,164.5],[207.0,165.5],[201.0,165.5],[200.0,166.5],[198.0,166.5],[196.0,167.5],[192.5,172.0],[192.5,180.0],[194.5,182.0],[196.5,187.0],[203.5,195.0],[205.5,199.0],[210.0,203.5],[216.0,207.5],[219.0,207.5],[220.0,208.5],[228.0,208.5],[229.0,207.5],[236.0,206.5],[248.0,199.5],[252.0,199.5],[253.0,198.5],[284.0,198.5],[285.0,197.5],[288.0,197.5],[295.0,194.5],[302.5,187.0],[304.5,182.0],[304.5,179.0],[302.5,174.0],[299.0,170.5],[294.0,169.5],[293.0,168.5],[290.0,168.5],[289.0,167.5],[278.0,167.5],[277.0,166.5],[274.0,166.5],[274.0,163.5],[276.0,163.5],[277.0,162.5],[283.0,162.5],[284.0,161.5],[302.0,161.5],[311.0,166.5],[316.5,172.0],[318.5,177.0],[318.5,188.0],[316.5,193.0],[308.0,201.5],[299.0,205.5],[289.0,207.5],[280.0,212.5],[270.5,222.0],[268.5,227.0],[267.0,228.5],[266.0,228.5],[262.0,232.5],[258.0,234.5],[253.0,235.5],[249.5,239.0],[248.5,241.0],[248.5,247.0],[253.0,252.5],[269.0,261.5],[271.0,261.5],[281.0,265.5],[288.0,266.5],[289.0,267.5],[295.0,267.5],[296.0,268.5],[300.0,268.5],[301.0,269.5],[309.0,270.5],[316.0,274.5],[323.5,282.0],[329.5,291.0],[329.5,300.0],[328.5,301.0],[328.5,303.0],[326.5,305.0],[324.5,310.0],[321.0,313.5],[314.0,317.5],[307.0,318.5],[306.0,319.5],[284.0,319.5],[283.0,320.5],[277.0,321.5],[276.5,319.0],[270.0,312.5],[265.0,309.5],[251.5,296.0],[250.5,293.0],[240.5,279.0],[237.5,272.0],[233.0,267.5],[226.0,265.5],[225.0,266.5],[220.0,267.5],[213.5,274.0],[213.5,275.0],[200.5,291.0],[197.5,297.0],[190.5,305.0],[182.5,318.0],[178.5,322.0],[177.5,325.0],[174.5,328.0],[171.5,333.0],[160.0,343.5],[154.0,346.5],[147.0,346.5],[146.0,347.5]],[[246.5,77.0],[248.5,76.0],[251.5,72.0],[251.5,70.0],[250.5,69.0],[250.5,61.0],[248.5,57.0],[246.0,54.5],[243.0,53.5],[238.0,46.5],[236.0,46.5],[232.0,44.5],[228.0,44.5],[224.0,46.5],[221.0,49.5],[219.0,49.5],[216.0,47.5],[212.0,47.5],[207.5,53.0],[208.5,58.0],[207.0,59.5],[198.0,59.5],[196.0,60.5],[190.5,67.0],[190.5,71.0],[191.5,73.0],[194.0,75.5],[196.0,75.5],[197.0,76.5],[199.0,75.5],[205.0,76.5],[206.0,75.5],[220.0,75.5],[221.0,74.5],[224.0,74.5],[225.0,75.5],[230.0,75.5],[231.0,76.5],[239.0,76.5],[240.0,77.5],[246.5,77.0]],[[95.5,126.0],[100.0,125.5],[108.0,121.5],[113.5,114.0],[113.5,110.0],[111.5,105.0],[112.5,99.0],[109.5,94.0],[109.5,92.0],[107.0,89.5],[93.0,88.5],[90.0,86.5],[80.0,86.5],[74.0,91.5],[68.0,93.5],[63.5,99.0],[63.5,105.0],[61.5,108.0],[61.5,116.0],[63.5,120.0],[68.0,124.5],[72.0,126.5],[95.5,126.0]],[[202.5,141.0],[207.0,139.5],[209.5,137.0],[210.5,133.0],[213.0,129.5],[216.0,128.5],[220.0,124.5],[224.0,122.5],[226.0,122.5],[230.5,118.0],[230.5,114.0],[228.0,111.5],[225.0,110.5],[220.0,106.5],[200.0,106.5],[194.0,109.5],[190.5,113.0],[189.5,118.0],[186.5,122.0],[183.0,124.5],[181.0,124.5],[177.5,128.0],[177.5,133.0],[181.0,136.5],[188.0,138.5],[192.0,141.5],[202.5,141.0]],[[104.5,172.0],[108.5,169.0],[110.5,165.0],[110.5,161.0],[106.0,155.5],[104.0,155.5],[103.0,154.5],[96.0,154.5],[95.0,153.5],[78.0,152.5],[73.5,156.0],[72.5,162.0],[74.5,166.0],[78.0,169.5],[83.0,171.5],[90.0,171.5],[91.0,172.5],[104.5,172.0]],[[188.5,284.0],[190.5,282.0],[190.5,279.0],[192.5,275.0],[192.5,273.0],[194.0,271.5],[198.0,270.5],[201.0,268.5],[205.5,264.0],[207.5,260.0],[207.5,258.0],[208.5,257.0],[208.5,254.0],[207.5,253.0],[207.5,245.0],[209.5,243.0],[209.5,238.0],[208.5,237.0],[209.5,231.0],[206.5,225.0],[206.5,222.0],[204.0,219.5],[198.0,218.5],[194.0,216.5],[191.5,213.0],[190.5,209.0],[186.0,204.5],[181.0,204.5],[179.0,205.5],[174.5,211.0],[174.5,218.0],[173.5,219.0],[173.5,224.0],[172.5,225.0],[172.5,233.0],[171.5,234.0],[171.5,237.0],[168.5,240.0],[168.5,244.0],[169.5,246.0],[164.5,252.0],[164.5,259.0],[167.5,263.0],[167.5,269.0],[168.5,270.0],[167.5,271.0],[170.5,277.0],[173.0,279.5],[180.0,283.5],[183.0,283.5],[184.0,284.5],[188.5,284.0]],[[70.5,252.0],[75.5,248.0],[77.5,244.0],[78.5,238.0],[83.0,235.5],[88.0,234.5],[91.5,230.0],[91.5,228.0],[90.5,227.0],[90.5,220.0],[87.0,215.5],[85.0,214.5],[80.0,214.5],[74.0,217.5],[68.0,217.5],[67.0,218.5],[56.0,218.5],[55.0,217.5],[52.0,217.5],[46.0,220.5],[42.5,224.0],[42.5,234.0],[44.5,239.0],[44.5,246.0],[46.5,249.0],[50.0,251.5],[59.0,250.5],[60.0,251.5],[64.0,251.5],[65.0,252.5],[70.5,252.0]]],"counters":[1,2,3,4,5,6,8,9]},{"w":429,"h":375,"sourceBounds":[640,349,1069,724],"contours":[[[24.0,371.5],[12.0,369.5],[3.5,360.0],[3.5,358.0],[2.5,357.0],[2.5,352.0],[3.5,351.0],[3.5,349.0],[5.5,347.0],[6.5,343.0],[9.5,339.0],[9.5,337.0],[11.0,335.5],[15.0,335.5],[17.5,338.0],[12.5,345.0],[12.5,352.0],[13.5,354.0],[17.0,357.5],[19.0,357.5],[20.0,358.5],[23.0,358.5],[24.0,359.5],[33.0,359.5],[34.0,358.5],[41.0,358.5],[42.0,357.5],[45.0,357.5],[46.0,356.5],[51.0,355.5],[56.0,352.5],[66.0,349.5],[76.0,342.5],[81.0,340.5],[90.0,333.5],[93.0,332.5],[101.0,326.5],[108.0,319.5],[113.0,316.5],[123.5,306.0],[123.5,305.0],[126.0,303.5],[137.5,292.0],[140.5,287.0],[152.5,274.0],[155.5,268.0],[162.5,260.0],[163.5,257.0],[168.5,252.0],[170.5,247.0],[177.5,239.0],[181.5,232.0],[184.5,229.0],[188.5,220.0],[194.5,213.0],[197.5,207.0],[200.5,204.0],[204.5,196.0],[206.5,194.0],[206.5,187.0],[205.5,185.0],[201.0,181.5],[194.0,181.5],[192.0,183.5],[184.0,186.5],[177.0,193.5],[173.0,195.5],[167.0,201.5],[154.0,210.5],[142.0,216.5],[136.0,217.5],[135.0,218.5],[131.0,218.5],[130.0,219.5],[115.0,218.5],[111.0,215.5],[108.0,214.5],[100.5,208.0],[98.5,205.0],[98.5,203.0],[96.5,199.0],[96.5,191.0],[100.5,183.0],[110.0,172.5],[115.0,171.5],[122.0,168.5],[137.0,168.5],[142.0,171.5],[145.0,171.5],[150.0,173.5],[154.0,173.5],[155.0,174.5],[159.0,174.5],[160.0,175.5],[172.0,175.5],[173.0,174.5],[179.0,174.5],[180.0,173.5],[183.0,173.5],[184.0,172.5],[187.0,172.5],[194.0,169.5],[196.0,169.5],[207.0,163.5],[210.5,160.0],[212.5,155.0],[212.5,152.0],[209.5,144.0],[209.5,112.0],[208.5,111.0],[208.5,107.0],[205.5,99.0],[205.5,96.0],[201.5,88.0],[195.5,82.0],[194.5,79.0],[184.5,66.0],[184.5,64.0],[181.5,59.0],[181.5,57.0],[178.5,51.0],[178.5,33.0],[179.5,32.0],[180.5,26.0],[186.5,17.0],[193.0,10.5],[200.0,6.5],[202.0,6.5],[212.0,2.5],[223.0,2.5],[224.0,3.5],[230.0,4.5],[238.0,7.5],[249.5,18.0],[250.5,23.0],[254.5,31.0],[255.5,38.0],[254.5,39.0],[254.5,50.0],[253.5,51.0],[252.5,57.0],[249.5,62.0],[248.5,67.0],[245.5,70.0],[240.5,81.0],[233.5,90.0],[231.5,94.0],[231.5,96.0],[225.5,106.0],[224.5,111.0],[223.5,112.0],[223.5,115.0],[222.5,116.0],[222.5,120.0],[221.5,121.0],[221.5,129.0],[223.5,134.0],[228.0,137.5],[235.0,137.5],[241.0,134.5],[256.5,119.0],[258.5,115.0],[262.5,111.0],[270.5,100.0],[284.5,86.0],[285.5,84.0],[285.5,76.0],[280.5,69.0],[280.5,61.0],[282.5,59.0],[285.5,51.0],[292.0,44.5],[295.0,43.5],[300.0,39.5],[306.0,36.5],[308.0,36.5],[313.0,33.5],[321.0,32.5],[322.0,31.5],[327.0,31.5],[328.0,30.5],[335.0,30.5],[336.0,31.5],[340.0,31.5],[341.0,32.5],[344.0,32.5],[349.0,34.5],[351.0,36.5],[354.0,37.5],[362.5,46.0],[363.5,48.0],[363.5,52.0],[364.5,53.0],[364.5,57.0],[365.5,58.0],[365.5,66.0],[364.5,67.0],[362.5,78.0],[360.5,82.0],[347.5,96.0],[346.5,102.0],[344.5,106.0],[335.0,116.5],[332.0,117.5],[328.0,120.5],[322.0,121.5],[315.0,124.5],[301.0,124.5],[300.0,123.5],[277.0,123.5],[264.0,128.5],[259.5,133.0],[258.5,135.0],[258.5,141.0],[259.5,143.0],[264.0,146.5],[270.0,147.5],[278.0,150.5],[283.5,156.0],[285.5,160.0],[285.5,162.0],[286.5,163.0],[286.5,169.0],[282.5,180.0],[270.0,191.5],[265.0,193.5],[263.0,195.5],[261.0,195.5],[258.0,198.5],[257.0,198.5],[250.5,205.0],[247.5,211.0],[239.5,220.0],[233.5,236.0],[233.5,239.0],[232.5,240.0],[232.5,245.0],[231.5,246.0],[231.5,262.0],[232.5,263.0],[234.5,273.0],[242.5,285.0],[247.0,289.5],[254.0,294.5],[265.0,299.5],[267.0,299.5],[270.0,301.5],[279.0,302.5],[287.0,305.5],[306.0,305.5],[307.0,304.5],[314.0,304.5],[319.0,302.5],[328.0,301.5],[329.0,300.5],[332.0,300.5],[345.0,295.5],[355.0,293.5],[375.0,283.5],[387.0,273.5],[388.0,273.5],[397.5,264.0],[398.5,261.0],[403.5,255.0],[405.5,245.0],[406.5,244.0],[406.5,236.0],[404.5,231.0],[395.5,221.0],[391.0,217.5],[384.0,216.5],[383.0,215.5],[368.0,215.5],[366.0,213.5],[360.0,212.5],[359.0,213.5],[356.0,213.5],[351.5,218.0],[350.0,221.5],[347.0,222.5],[343.0,226.5],[339.0,228.5],[329.5,238.0],[326.5,243.0],[326.5,245.0],[324.5,249.0],[322.5,251.0],[321.5,259.0],[320.0,261.5],[318.5,260.0],[318.5,254.0],[319.5,253.0],[319.5,249.0],[320.5,248.0],[320.5,243.0],[324.5,235.0],[330.5,228.0],[332.5,224.0],[348.0,212.5],[350.0,212.5],[356.0,209.5],[367.0,207.5],[368.0,206.5],[388.0,206.5],[389.0,207.5],[393.0,207.5],[394.0,208.5],[398.0,208.5],[399.0,209.5],[404.0,210.5],[407.0,212.5],[419.5,225.0],[421.5,229.0],[422.5,235.0],[424.5,238.0],[424.5,241.0],[425.5,242.0],[425.5,258.0],[424.5,259.0],[424.5,262.0],[421.5,268.0],[420.5,273.0],[414.5,280.0],[413.5,283.0],[408.0,288.5],[407.0,288.5],[404.0,291.5],[399.0,293.5],[394.0,297.5],[389.0,298.5],[386.0,300.5],[384.0,300.5],[380.0,302.5],[377.0,302.5],[367.0,306.5],[365.0,306.5],[362.0,308.5],[355.0,309.5],[349.0,312.5],[347.0,312.5],[338.0,317.5],[333.0,318.5],[326.0,322.5],[321.0,323.5],[315.0,326.5],[303.0,334.5],[296.0,337.5],[294.0,339.5],[292.0,339.5],[282.0,344.5],[271.0,347.5],[267.0,349.5],[262.0,349.5],[261.0,350.5],[246.0,350.5],[245.0,349.5],[242.0,349.5],[239.0,347.5],[234.0,346.5],[228.0,343.5],[226.0,341.5],[223.0,340.5],[216.5,334.0],[209.5,323.0],[209.5,321.0],[207.5,317.0],[207.5,311.0],[206.5,310.0],[206.5,301.0],[207.5,300.0],[207.5,294.0],[206.5,293.0],[206.5,291.0],[207.5,290.0],[207.5,287.0],[209.5,284.0],[211.5,272.0],[214.5,267.0],[214.5,265.0],[218.5,255.0],[218.5,252.0],[219.5,251.0],[219.5,248.0],[221.5,245.0],[222.5,239.0],[225.5,235.0],[225.5,233.0],[228.5,228.0],[230.5,221.0],[233.5,218.0],[233.5,216.0],[236.5,212.0],[237.5,208.0],[243.5,202.0],[245.5,197.0],[245.5,193.0],[243.5,188.0],[242.0,186.5],[236.0,183.5],[232.0,183.5],[231.0,184.5],[226.0,185.5],[219.5,192.0],[216.5,197.0],[212.5,201.0],[210.5,206.0],[203.5,214.0],[194.5,230.0],[190.5,234.0],[185.5,244.0],[181.5,248.0],[179.5,252.0],[179.5,254.0],[175.5,260.0],[168.5,268.0],[165.5,274.0],[161.5,278.0],[159.5,282.0],[154.5,288.0],[151.5,294.0],[147.5,298.0],[142.5,306.0],[133.5,315.0],[130.5,320.0],[127.0,323.5],[126.0,323.5],[121.0,328.5],[120.0,328.5],[104.0,341.5],[101.0,342.5],[91.0,349.5],[73.0,358.5],[68.0,359.5],[63.0,362.5],[55.0,364.5],[52.0,366.5],[50.0,366.5],[46.0,368.5],[40.0,368.5],[35.0,370.5],[25.0,370.5],[24.0,371.5]],[[145.0,149.5],[129.0,149.5],[124.0,147.5],[119.0,147.5],[109.0,141.5],[98.5,131.0],[96.5,127.0],[96.5,125.0],[94.5,122.0],[93.5,111.0],[94.5,110.0],[94.5,107.0],[96.5,105.0],[96.5,103.0],[99.5,97.0],[103.0,93.5],[112.0,88.5],[118.0,87.5],[119.0,86.5],[131.0,86.5],[132.0,87.5],[135.0,87.5],[137.0,89.5],[140.0,90.5],[147.5,97.0],[152.5,106.0],[154.5,116.0],[158.5,123.0],[162.0,126.5],[167.0,128.5],[172.0,128.5],[180.0,125.5],[186.0,119.5],[187.5,121.0],[187.5,123.0],[184.5,129.0],[175.0,138.5],[172.0,139.5],[170.0,141.5],[168.0,141.5],[164.0,144.5],[159.0,145.5],[152.0,148.5],[146.0,148.5],[145.0,149.5]]],"counters":[1]},{"w":364,"h":326,"sourceBounds":[32,771,396,1097],"contours":[[[160.0,322.5],[140.0,321.5],[136.0,319.5],[133.0,319.5],[125.0,316.5],[122.0,316.5],[102.0,304.5],[88.5,289.0],[85.5,283.0],[85.5,281.0],[82.5,276.0],[81.5,269.0],[79.5,264.0],[79.5,260.0],[78.5,259.0],[79.5,242.0],[80.5,241.0],[80.5,237.0],[81.5,236.0],[82.5,229.0],[83.5,228.0],[83.5,223.0],[91.5,201.0],[91.5,194.0],[88.0,189.5],[86.0,188.5],[80.0,188.5],[78.0,189.5],[58.0,206.5],[49.0,210.5],[45.0,213.5],[43.0,213.5],[39.0,215.5],[25.0,215.5],[22.0,213.5],[19.0,213.5],[15.0,211.5],[8.5,206.0],[4.5,200.0],[4.5,197.0],[2.5,193.0],[2.5,189.0],[3.5,188.0],[3.5,184.0],[10.5,172.0],[17.0,166.5],[21.0,164.5],[25.0,164.5],[26.0,163.5],[48.0,163.5],[49.0,164.5],[55.0,164.5],[56.0,165.5],[60.0,165.5],[61.0,166.5],[66.0,166.5],[67.0,167.5],[80.0,167.5],[81.0,166.5],[84.0,166.5],[88.0,164.5],[90.0,164.5],[97.5,157.0],[100.5,152.0],[100.5,150.0],[102.5,146.0],[103.5,138.0],[106.5,130.0],[106.5,124.0],[108.0,122.5],[110.0,122.5],[114.5,117.0],[114.5,110.0],[111.0,105.5],[106.0,103.5],[102.0,103.5],[96.0,97.5],[94.0,97.5],[93.0,96.5],[84.0,96.5],[79.0,99.5],[72.5,106.0],[67.5,116.0],[67.5,119.0],[66.5,120.0],[66.5,127.0],[65.0,128.5],[63.5,126.0],[63.5,118.0],[64.5,117.0],[64.5,112.0],[65.5,111.0],[66.5,105.0],[69.5,102.0],[73.5,94.0],[78.0,89.5],[87.0,83.5],[93.0,82.5],[94.0,81.5],[105.0,81.5],[106.0,82.5],[109.0,82.5],[114.0,85.5],[122.5,95.0],[122.5,98.0],[123.5,99.0],[123.5,108.0],[122.5,109.0],[121.5,114.0],[119.5,117.0],[119.5,120.0],[117.5,123.0],[117.5,125.0],[113.5,132.0],[113.5,135.0],[111.5,138.0],[111.5,146.0],[115.0,150.5],[117.0,151.5],[124.0,151.5],[130.0,146.5],[137.0,143.5],[142.0,139.5],[144.0,139.5],[152.0,132.5],[157.0,130.5],[161.5,126.0],[163.5,122.0],[163.5,119.0],[165.5,114.0],[165.5,103.0],[166.5,102.0],[166.5,98.0],[165.5,97.0],[165.5,89.0],[163.5,84.0],[163.5,81.0],[157.5,72.0],[139.5,55.0],[138.5,50.0],[136.5,47.0],[136.5,44.0],[134.5,40.0],[134.5,30.0],[140.5,18.0],[149.0,9.5],[155.0,5.5],[160.0,4.5],[161.0,3.5],[167.0,3.5],[168.0,2.5],[178.0,2.5],[179.0,3.5],[186.0,4.5],[196.5,12.0],[196.5,13.0],[203.5,20.0],[203.5,22.0],[205.5,26.0],[205.5,31.0],[206.5,32.0],[206.5,42.0],[205.5,43.0],[205.5,47.0],[201.5,54.0],[201.5,57.0],[191.5,75.0],[191.5,77.0],[187.5,84.0],[187.5,86.0],[183.5,94.0],[183.5,101.0],[187.0,105.5],[189.0,106.5],[197.0,106.5],[199.0,104.5],[204.0,102.5],[218.0,90.5],[223.0,87.5],[228.0,82.5],[234.0,78.5],[241.0,75.5],[244.0,72.5],[249.0,71.5],[250.0,70.5],[254.0,70.5],[255.0,69.5],[266.0,68.5],[271.0,70.5],[274.0,70.5],[286.0,76.5],[288.0,76.5],[298.5,87.0],[299.5,90.0],[301.5,92.0],[302.5,98.0],[303.5,99.0],[303.5,111.0],[302.5,112.0],[301.5,117.0],[297.5,124.0],[297.5,126.0],[290.5,133.0],[289.5,136.0],[284.5,143.0],[277.5,149.0],[277.5,150.0],[263.5,165.0],[263.5,166.0],[256.5,173.0],[256.5,174.0],[252.0,178.5],[251.0,178.5],[237.0,193.5],[236.0,193.5],[232.0,197.5],[226.0,199.5],[223.0,202.5],[221.0,202.5],[220.0,203.5],[206.0,203.5],[203.0,201.5],[196.0,201.5],[194.0,202.5],[191.5,205.0],[189.5,210.0],[189.5,216.0],[188.5,217.0],[187.5,223.0],[180.0,229.5],[174.0,232.5],[164.0,232.5],[156.0,227.5],[152.5,224.0],[149.5,218.0],[148.5,212.0],[147.5,211.0],[147.5,193.0],[151.5,182.0],[152.5,175.0],[154.5,172.0],[155.5,167.0],[156.5,166.0],[156.5,163.0],[157.5,162.0],[157.5,154.0],[156.5,152.0],[152.0,148.5],[145.0,148.5],[137.0,154.5],[132.0,156.5],[129.0,159.5],[126.0,160.5],[122.0,163.5],[114.5,172.0],[112.5,177.0],[110.5,179.0],[110.5,181.0],[107.5,187.0],[105.5,198.0],[104.5,199.0],[104.5,209.0],[105.5,210.0],[105.5,218.0],[106.5,219.0],[107.5,226.0],[113.5,241.0],[117.5,245.0],[119.5,249.0],[130.0,259.5],[148.0,269.5],[153.0,270.5],[156.0,272.5],[163.0,273.5],[164.0,274.5],[178.0,275.5],[179.0,276.5],[205.0,275.5],[206.0,274.5],[210.0,274.5],[211.0,273.5],[221.0,272.5],[226.0,270.5],[234.0,269.5],[247.0,264.5],[250.0,264.5],[255.0,261.5],[257.0,261.5],[258.0,260.5],[269.0,257.5],[272.0,255.5],[274.0,255.5],[278.0,252.5],[288.0,249.5],[294.0,245.5],[300.0,244.5],[304.0,242.5],[310.0,237.5],[322.0,231.5],[330.0,224.5],[331.0,224.5],[338.5,217.0],[340.5,211.0],[343.5,207.0],[343.5,204.0],[344.5,203.0],[344.5,196.0],[343.5,195.0],[343.5,192.0],[342.5,191.0],[342.5,188.0],[340.5,183.0],[335.0,177.5],[330.0,175.5],[327.0,175.5],[326.0,174.5],[307.0,174.5],[306.0,175.5],[300.0,175.5],[294.0,178.5],[278.0,193.5],[275.5,194.0],[278.5,187.0],[288.0,177.5],[302.0,169.5],[304.0,169.5],[308.0,167.5],[311.0,167.5],[312.0,166.5],[316.0,166.5],[317.0,165.5],[330.0,165.5],[331.0,166.5],[335.0,166.5],[342.0,169.5],[348.0,173.5],[353.5,180.0],[358.5,189.0],[360.5,208.0],[359.5,209.0],[359.5,215.0],[358.5,216.0],[357.5,224.0],[356.5,225.0],[355.5,230.0],[348.5,244.0],[344.5,248.0],[343.5,251.0],[337.0,257.5],[330.0,261.5],[326.0,265.5],[320.0,268.5],[318.0,270.5],[311.0,273.5],[308.0,273.5],[305.0,275.5],[303.0,275.5],[299.0,277.5],[296.0,277.5],[288.0,281.5],[284.0,281.5],[279.0,283.5],[275.0,283.5],[274.0,284.5],[264.0,286.5],[257.0,289.5],[250.0,290.5],[236.0,297.5],[234.0,297.5],[230.0,300.5],[225.0,301.5],[220.0,304.5],[215.0,305.5],[198.0,314.5],[192.0,315.5],[186.0,318.5],[176.0,319.5],[175.0,320.5],[169.0,320.5],[168.0,321.5],[161.0,321.5],[160.0,322.5]],[[231.5,178.0],[237.0,176.5],[242.5,171.0],[243.5,164.0],[244.5,163.0],[244.5,152.0],[243.5,151.0],[244.5,149.0],[243.5,148.0],[243.5,144.0],[242.5,143.0],[243.5,136.0],[241.5,134.0],[240.5,131.0],[237.0,127.5],[235.0,126.5],[228.0,127.5],[225.0,125.5],[223.0,125.5],[222.0,124.5],[217.0,124.5],[215.0,122.5],[211.0,121.5],[202.0,127.5],[183.0,128.5],[177.5,133.0],[176.5,135.0],[176.5,142.0],[179.5,150.0],[178.5,151.0],[182.5,160.0],[185.0,162.5],[189.0,164.5],[206.0,164.5],[209.5,167.0],[212.5,174.0],[218.0,178.5],[231.5,178.0]]],"counters":[1,3]},{"w":371,"h":358,"sourceBounds":[355,747,726,1105],"contours":[[[29.0,354.5],[18.0,354.5],[17.0,353.5],[14.0,353.5],[3.5,345.0],[2.5,343.0],[2.5,335.0],[3.5,334.0],[3.5,330.0],[5.5,325.0],[15.0,315.5],[22.0,310.5],[30.0,306.5],[32.0,306.5],[37.0,303.5],[44.0,302.5],[45.0,301.5],[50.0,301.5],[55.0,299.5],[63.0,298.5],[66.0,296.5],[69.0,296.5],[83.0,286.5],[99.5,270.0],[107.5,259.0],[112.5,254.0],[116.5,246.0],[124.5,237.0],[125.5,233.0],[132.5,223.0],[142.5,202.0],[144.5,200.0],[144.5,198.0],[148.5,190.0],[148.5,187.0],[152.5,179.0],[152.5,171.0],[151.5,169.0],[147.0,165.5],[140.0,165.5],[133.0,168.5],[129.0,172.5],[126.0,173.5],[118.0,179.5],[116.0,179.5],[112.0,183.5],[108.0,184.5],[100.0,188.5],[97.0,191.5],[93.0,193.5],[91.0,193.5],[87.0,195.5],[71.0,195.5],[66.0,193.5],[60.0,189.5],[52.5,181.0],[52.5,179.0],[49.5,173.0],[49.5,161.0],[50.5,160.0],[50.5,157.0],[51.5,156.0],[52.5,151.0],[58.5,141.0],[66.5,132.0],[66.5,131.0],[72.0,125.5],[75.0,124.5],[78.0,121.5],[81.0,120.5],[86.0,116.5],[90.0,115.5],[93.0,113.5],[95.0,113.5],[98.0,111.5],[100.0,111.5],[101.0,110.5],[108.0,110.5],[113.0,108.5],[117.0,108.5],[118.0,107.5],[135.0,109.5],[141.5,114.0],[141.5,117.0],[140.0,117.5],[132.0,114.5],[124.0,114.5],[123.0,113.5],[121.0,113.5],[120.0,114.5],[113.0,114.5],[112.0,115.5],[97.0,118.5],[88.0,122.5],[80.5,129.0],[77.5,135.0],[77.5,142.0],[83.0,148.5],[88.0,149.5],[89.0,150.5],[92.0,150.5],[93.0,151.5],[98.0,151.5],[99.0,152.5],[125.0,152.5],[126.0,151.5],[132.0,151.5],[133.0,150.5],[143.0,148.5],[149.0,144.5],[155.0,142.5],[163.5,134.0],[163.5,132.0],[166.5,127.0],[166.5,125.0],[170.5,120.0],[170.5,118.0],[175.5,105.0],[176.5,95.0],[177.5,94.0],[177.5,80.0],[170.5,63.0],[160.5,53.0],[153.5,39.0],[153.5,25.0],[154.5,24.0],[155.5,19.0],[164.0,8.5],[174.0,3.5],[178.0,3.5],[179.0,2.5],[191.0,2.5],[192.0,3.5],[195.0,3.5],[206.0,9.5],[210.5,14.0],[215.5,21.0],[219.5,31.0],[219.5,43.0],[218.5,44.0],[218.5,51.0],[216.5,55.0],[210.5,63.0],[205.5,73.0],[199.5,81.0],[197.5,86.0],[194.5,89.0],[192.5,95.0],[190.5,97.0],[187.5,104.0],[185.5,106.0],[182.5,112.0],[182.5,114.0],[179.5,119.0],[177.5,128.0],[179.5,133.0],[182.0,135.5],[184.0,136.5],[192.0,136.5],[195.0,134.5],[197.0,134.5],[199.0,132.5],[202.0,132.5],[208.0,128.5],[219.0,123.5],[231.0,114.5],[239.0,110.5],[242.0,107.5],[245.0,106.5],[254.0,99.5],[259.0,97.5],[264.0,93.5],[274.0,91.5],[275.0,90.5],[281.0,90.5],[282.0,89.5],[290.0,89.5],[291.0,90.5],[295.0,90.5],[296.0,91.5],[299.0,91.5],[304.0,93.5],[314.0,100.5],[320.5,107.0],[326.5,119.0],[325.5,133.0],[322.5,140.0],[314.0,147.5],[306.0,150.5],[296.0,150.5],[295.0,151.5],[284.0,150.5],[280.0,148.5],[278.0,148.5],[275.0,146.5],[270.0,145.5],[268.0,143.5],[262.0,142.5],[259.0,140.5],[251.0,139.5],[250.0,138.5],[245.0,138.5],[244.0,137.5],[225.0,137.5],[224.0,138.5],[213.0,139.5],[212.0,140.5],[209.0,140.5],[205.0,142.5],[194.0,145.5],[184.0,150.5],[180.5,154.0],[178.5,159.0],[178.5,169.0],[179.5,170.0],[179.5,173.0],[180.5,174.0],[181.5,179.0],[186.5,188.0],[188.5,190.0],[189.5,194.0],[196.5,206.0],[196.5,208.0],[201.5,214.0],[204.5,220.0],[207.5,223.0],[214.5,234.0],[233.0,253.5],[234.0,253.5],[249.0,267.5],[258.0,273.5],[262.0,275.5],[264.0,275.5],[266.0,277.5],[278.0,283.5],[280.0,283.5],[285.0,286.5],[287.0,286.5],[291.0,288.5],[294.0,288.5],[297.0,290.5],[305.0,292.5],[316.0,297.5],[327.0,299.5],[335.0,302.5],[343.0,302.5],[344.0,301.5],[349.0,300.5],[355.5,294.0],[357.5,289.0],[357.5,284.0],[356.5,283.0],[356.5,280.0],[355.5,279.0],[354.5,274.0],[352.5,271.0],[339.0,258.5],[329.0,256.5],[321.0,253.5],[295.0,253.5],[293.5,251.0],[295.0,249.5],[299.0,248.5],[302.0,246.5],[317.0,246.5],[318.0,247.5],[328.0,248.5],[329.0,249.5],[331.0,249.5],[335.0,251.5],[338.0,251.5],[342.0,253.5],[347.0,257.5],[353.0,260.5],[357.5,265.0],[366.5,279.0],[366.5,283.0],[367.5,284.0],[367.5,295.0],[366.5,296.0],[365.5,301.0],[362.5,304.0],[361.5,308.0],[355.0,314.5],[350.0,317.5],[341.5,326.0],[340.5,330.0],[336.0,334.5],[332.0,336.5],[326.0,341.5],[323.0,341.5],[316.0,344.5],[312.0,344.5],[311.0,345.5],[287.0,345.5],[280.0,342.5],[274.0,341.5],[267.0,337.5],[263.0,336.5],[254.0,330.5],[239.5,317.0],[239.5,316.0],[233.5,310.0],[227.5,300.0],[224.5,297.0],[221.5,290.0],[218.5,287.0],[215.5,279.0],[213.5,277.0],[209.5,268.0],[207.5,266.0],[204.5,260.0],[203.5,254.0],[200.5,250.0],[200.5,248.0],[195.5,239.0],[194.5,235.0],[191.5,231.0],[188.5,221.0],[185.5,216.0],[185.5,214.0],[181.5,206.0],[181.5,204.0],[178.5,199.0],[176.5,191.0],[169.0,184.5],[163.0,184.5],[157.5,189.0],[155.5,199.0],[152.5,204.0],[152.5,206.0],[149.5,213.0],[149.5,216.0],[146.5,221.0],[142.5,237.0],[144.5,242.0],[149.0,246.5],[159.0,249.5],[167.0,256.5],[173.0,259.5],[187.5,273.0],[192.5,280.0],[197.5,290.0],[198.5,296.0],[199.5,297.0],[199.5,309.0],[194.5,320.0],[189.0,324.5],[187.0,324.5],[185.0,326.5],[180.0,327.5],[179.0,328.5],[167.0,328.5],[158.0,324.5],[153.5,320.0],[149.5,314.0],[149.5,312.0],[148.5,311.0],[148.5,306.0],[149.5,305.0],[149.5,298.0],[150.5,297.0],[150.5,294.0],[153.5,289.0],[153.5,286.0],[155.5,281.0],[155.5,273.0],[154.5,272.0],[154.5,269.0],[152.5,264.0],[147.0,258.5],[144.0,256.5],[137.0,256.5],[132.0,259.5],[124.5,267.0],[124.5,268.0],[121.5,271.0],[120.5,275.0],[118.5,278.0],[111.5,286.0],[106.5,295.0],[97.5,305.0],[95.5,309.0],[75.0,328.5],[72.0,329.5],[62.0,339.5],[56.0,343.5],[44.0,349.5],[42.0,349.5],[29.0,354.5]]],"counters":[1,2]},{"w":362,"h":376,"sourceBounds":[679,742,1041,1118],"contours":[[[17.0,372.5],[5.0,372.5],[3.5,370.0],[5.0,368.5],[8.0,368.5],[12.0,366.5],[17.0,365.5],[20.0,363.5],[22.0,363.5],[25.0,361.5],[27.0,361.5],[33.0,358.5],[35.0,356.5],[42.0,353.5],[60.0,341.5],[73.0,329.5],[76.0,328.5],[96.5,308.0],[96.5,307.0],[110.5,291.0],[118.5,279.0],[120.5,274.0],[124.5,269.0],[131.5,255.0],[131.5,253.0],[133.5,249.0],[133.5,241.0],[132.5,239.0],[128.0,235.5],[121.0,235.5],[108.0,246.5],[105.0,247.5],[102.0,250.5],[99.0,251.5],[97.0,253.5],[95.0,253.5],[92.0,255.5],[87.0,256.5],[86.0,257.5],[82.0,257.5],[81.0,258.5],[73.0,258.5],[72.0,257.5],[65.0,256.5],[56.5,249.0],[54.5,245.0],[54.5,232.0],[63.0,222.5],[69.0,219.5],[76.0,217.5],[79.5,214.0],[81.5,209.0],[81.5,207.0],[80.5,206.0],[81.5,195.0],[85.5,185.0],[94.0,177.5],[106.0,171.5],[111.0,170.5],[114.0,168.5],[116.0,168.5],[123.0,165.5],[129.0,164.5],[135.0,161.5],[139.0,161.5],[140.0,160.5],[147.0,159.5],[151.0,157.5],[155.0,157.5],[156.0,156.5],[163.0,155.5],[164.0,154.5],[169.0,153.5],[174.0,150.5],[176.0,150.5],[183.0,144.5],[187.0,142.5],[194.5,134.0],[194.5,127.0],[193.5,125.0],[189.0,121.5],[184.0,120.5],[183.0,121.5],[180.0,121.5],[166.0,128.5],[157.0,135.5],[153.0,136.5],[147.0,140.5],[141.0,141.5],[137.0,143.5],[133.0,143.5],[132.0,144.5],[122.0,143.5],[118.0,141.5],[115.0,141.5],[111.0,139.5],[108.5,137.0],[105.5,132.0],[104.5,126.0],[103.5,125.0],[104.5,119.0],[107.5,113.0],[112.0,108.5],[118.0,104.5],[123.0,103.5],[127.5,98.0],[127.5,92.0],[126.5,90.0],[121.0,85.5],[110.5,75.0],[109.5,73.0],[109.5,71.0],[108.5,70.0],[108.5,65.0],[107.5,64.0],[107.5,55.0],[110.5,48.0],[124.0,33.5],[128.0,31.5],[133.0,31.5],[134.0,30.5],[139.0,30.5],[140.0,29.5],[151.0,30.5],[159.0,34.5],[161.5,37.0],[165.5,45.0],[170.5,63.0],[175.0,66.5],[181.0,66.5],[185.5,63.0],[187.5,58.0],[187.5,54.0],[189.5,52.0],[190.5,46.0],[196.5,37.0],[197.5,33.0],[202.5,27.0],[203.5,24.0],[219.0,10.5],[232.0,5.5],[240.0,4.5],[245.0,2.5],[260.0,2.5],[261.0,3.5],[264.0,3.5],[268.0,5.5],[270.0,5.5],[275.0,8.5],[283.5,16.0],[286.5,22.0],[286.5,25.0],[287.5,26.0],[287.5,36.0],[283.5,44.0],[279.5,48.0],[279.5,49.0],[268.5,59.0],[267.5,61.0],[267.5,67.0],[268.5,69.0],[273.0,72.5],[280.0,72.5],[281.0,71.5],[285.0,71.5],[286.0,70.5],[294.0,70.5],[295.0,71.5],[298.0,71.5],[303.0,73.5],[307.5,77.0],[313.5,86.0],[313.5,95.0],[306.0,107.5],[302.0,109.5],[295.0,110.5],[294.0,111.5],[282.0,112.5],[281.0,111.5],[274.0,111.5],[273.0,110.5],[269.0,110.5],[268.0,109.5],[264.0,109.5],[263.0,108.5],[258.0,108.5],[257.0,107.5],[242.0,107.5],[241.0,108.5],[231.0,109.5],[222.0,113.5],[214.5,121.0],[211.5,127.0],[210.5,134.0],[212.5,139.0],[215.0,141.5],[220.0,143.5],[225.0,143.5],[226.0,142.5],[229.0,142.5],[230.0,141.5],[238.0,139.5],[247.0,134.5],[255.0,132.5],[260.0,129.5],[272.0,129.5],[276.0,131.5],[282.5,138.0],[282.5,140.0],[283.5,141.0],[283.5,146.0],[282.5,147.0],[282.5,149.0],[279.0,153.5],[275.0,155.5],[269.0,155.5],[268.0,156.5],[240.0,156.5],[239.0,155.5],[233.0,155.5],[232.0,156.5],[228.0,156.5],[227.0,157.5],[220.0,158.5],[215.0,161.5],[205.0,170.5],[202.0,172.5],[198.0,173.5],[192.0,179.5],[191.0,179.5],[183.5,188.0],[183.5,195.0],[184.5,197.0],[189.0,200.5],[196.0,200.5],[200.0,198.5],[204.0,198.5],[205.0,197.5],[212.0,196.5],[216.0,194.5],[220.0,194.5],[228.0,191.5],[236.0,190.5],[237.0,189.5],[244.0,188.5],[248.0,186.5],[255.0,185.5],[258.0,183.5],[269.0,180.5],[272.0,178.5],[274.0,178.5],[278.0,176.5],[281.0,176.5],[282.0,175.5],[291.0,174.5],[292.0,173.5],[296.0,173.5],[297.0,172.5],[301.0,172.5],[302.0,171.5],[324.0,171.5],[325.0,172.5],[329.0,172.5],[337.0,176.5],[345.5,184.0],[348.5,189.0],[349.5,196.0],[350.5,197.0],[350.5,204.0],[345.5,215.0],[338.0,221.5],[327.0,225.5],[314.0,225.5],[313.0,224.5],[309.0,224.5],[308.0,223.5],[301.0,222.5],[297.0,220.5],[294.0,220.5],[284.0,216.5],[281.0,216.5],[277.0,214.5],[269.0,213.5],[268.0,212.5],[262.0,212.5],[261.0,211.5],[254.0,211.5],[253.0,210.5],[217.0,211.5],[216.0,212.5],[207.0,212.5],[206.0,213.5],[192.0,214.5],[191.0,215.5],[186.0,215.5],[185.0,216.5],[175.0,217.5],[164.0,221.5],[156.5,228.0],[152.5,235.0],[145.5,244.0],[145.5,246.0],[143.5,250.0],[143.5,257.0],[146.0,260.5],[149.0,262.5],[155.0,262.5],[161.0,258.5],[164.0,258.5],[165.0,257.5],[179.0,257.5],[180.0,258.5],[185.0,258.5],[186.0,259.5],[190.0,259.5],[191.0,258.5],[202.0,258.5],[213.0,254.5],[220.0,253.5],[231.0,248.5],[234.0,248.5],[235.0,247.5],[240.0,246.5],[247.0,242.5],[249.0,242.5],[256.0,239.5],[260.0,239.5],[261.0,238.5],[273.0,238.5],[274.0,239.5],[277.0,239.5],[278.0,240.5],[283.0,241.5],[289.5,248.0],[291.5,253.0],[291.5,258.0],[290.5,259.0],[290.5,261.0],[283.0,269.5],[279.0,270.5],[276.0,272.5],[256.0,272.5],[255.0,271.5],[250.0,271.5],[249.0,270.5],[247.0,270.5],[246.0,271.5],[241.0,272.5],[235.5,278.0],[231.5,286.0],[231.5,288.0],[229.5,292.0],[229.5,295.0],[228.5,296.0],[228.5,303.0],[229.5,304.0],[230.5,311.0],[232.5,314.0],[237.0,318.5],[243.0,321.5],[246.0,321.5],[247.0,322.5],[265.0,322.5],[266.0,321.5],[273.0,321.5],[274.0,320.5],[285.0,318.5],[299.0,311.5],[304.0,310.5],[315.0,305.5],[323.0,304.5],[324.0,303.5],[337.0,303.5],[338.0,304.5],[342.0,304.5],[346.0,306.5],[355.5,314.0],[357.5,319.0],[357.5,323.0],[358.5,324.0],[358.5,333.0],[356.5,338.0],[347.0,347.5],[342.0,349.5],[332.0,350.5],[331.0,351.5],[313.0,350.5],[312.0,349.5],[308.0,349.5],[307.0,348.5],[305.0,348.5],[298.0,345.5],[291.0,344.5],[290.0,343.5],[281.0,342.5],[276.0,340.5],[272.0,340.5],[271.0,339.5],[262.0,339.5],[261.0,338.5],[251.0,338.5],[250.0,339.5],[241.0,338.5],[240.0,339.5],[231.0,339.5],[230.0,340.5],[221.0,340.5],[220.0,341.5],[203.0,341.5],[202.0,342.5],[194.0,342.5],[193.0,343.5],[186.0,344.5],[182.0,346.5],[179.0,346.5],[175.0,348.5],[168.0,349.5],[164.0,352.5],[148.0,359.5],[145.0,359.5],[141.0,361.5],[137.0,361.5],[136.0,362.5],[131.0,362.5],[130.0,363.5],[118.0,362.5],[111.0,359.5],[104.5,354.0],[104.5,353.0],[99.5,348.0],[98.5,345.0],[93.0,339.5],[91.0,338.5],[83.0,338.5],[78.0,342.5],[71.0,345.5],[66.0,349.5],[64.0,349.5],[60.0,352.5],[55.0,354.5],[45.0,361.5],[41.0,363.5],[39.0,363.5],[34.0,366.5],[32.0,366.5],[27.0,369.5],[21.0,370.5],[17.0,372.5]],[[204.5,86.0],[215.0,76.5],[217.0,75.5],[221.0,75.5],[225.0,73.5],[228.5,70.0],[231.5,64.0],[231.5,62.0],[232.5,61.0],[231.5,60.0],[232.5,58.0],[231.5,56.0],[231.5,54.0],[232.5,53.0],[232.5,45.0],[230.5,41.0],[230.5,36.0],[227.0,31.5],[225.0,31.5],[224.0,30.5],[219.0,30.5],[217.0,31.5],[214.5,34.0],[211.5,41.0],[211.5,43.0],[209.0,45.5],[206.0,45.5],[205.0,46.5],[204.0,45.5],[202.0,46.5],[198.0,46.5],[195.5,49.0],[193.5,53.0],[193.5,64.0],[192.5,66.0],[194.5,70.0],[194.5,72.0],[193.5,73.0],[194.5,79.0],[195.5,80.0],[194.5,81.0],[195.5,82.0],[195.5,84.0],[198.0,86.5],[204.5,86.0]],[[137.5,208.0],[145.0,206.5],[148.5,203.0],[152.5,192.0],[157.5,187.0],[159.5,183.0],[158.5,179.0],[156.0,176.5],[152.0,174.5],[148.0,174.5],[147.0,173.5],[146.0,174.5],[144.0,173.5],[142.0,174.5],[138.0,174.5],[135.0,176.5],[133.0,176.5],[128.0,183.5],[125.0,184.5],[122.0,187.5],[111.0,192.5],[105.0,192.5],[103.0,193.5],[100.5,196.0],[100.5,198.0],[99.5,199.0],[100.5,203.0],[105.0,206.5],[117.0,207.5],[118.0,208.5],[137.5,208.0]],[[181.5,323.0],[194.0,322.5],[198.5,318.0],[199.5,315.0],[204.0,312.5],[212.5,304.0],[213.5,302.0],[213.5,294.0],[212.5,293.0],[212.5,291.0],[208.0,285.5],[203.0,283.5],[202.0,284.5],[201.0,283.5],[198.0,283.5],[194.0,285.5],[180.0,285.5],[179.0,286.5],[151.0,286.5],[150.0,285.5],[141.0,284.5],[140.0,285.5],[138.0,285.5],[130.5,292.0],[128.5,296.0],[128.5,301.0],[129.5,303.0],[134.0,307.5],[137.0,308.5],[141.0,311.5],[143.0,311.5],[149.0,318.5],[154.0,319.5],[158.0,321.5],[161.0,321.5],[162.0,322.5],[166.0,322.5],[167.0,323.5],[181.5,323.0]]],"counters":[1,2,3,4,6]}],[{"w":236,"h":256,"sourceBounds":[190,481,426,737],"contours":[[[200.0,252.5],[185.0,252.5],[181.0,249.5],[177.0,247.5],[175.0,247.5],[172.0,245.5],[161.5,235.0],[158.5,228.0],[156.5,226.0],[155.5,222.0],[151.5,216.0],[149.5,209.0],[143.0,201.5],[141.0,200.5],[133.0,200.5],[128.0,204.5],[124.0,205.5],[121.0,207.5],[112.0,207.5],[111.0,206.5],[109.0,206.5],[103.5,202.0],[101.5,198.0],[101.5,189.0],[103.5,185.0],[109.0,181.5],[113.0,177.5],[118.0,176.5],[129.0,169.5],[132.5,166.0],[135.5,159.0],[135.5,155.0],[136.5,154.0],[136.5,135.0],[135.5,134.0],[135.5,126.0],[134.5,125.0],[134.5,121.0],[132.5,117.0],[125.0,110.5],[117.0,110.5],[116.0,111.5],[111.0,112.5],[106.5,116.0],[102.5,121.0],[102.5,124.0],[101.5,125.0],[102.5,130.0],[107.0,134.5],[114.0,135.5],[117.5,139.0],[119.5,145.0],[118.5,146.0],[118.5,150.0],[117.5,152.0],[111.0,158.5],[104.0,160.5],[100.5,164.0],[98.5,168.0],[98.5,170.0],[95.5,177.0],[94.5,184.0],[93.5,185.0],[93.5,190.0],[91.5,195.0],[91.5,200.0],[90.5,201.0],[89.5,211.0],[87.5,216.0],[87.5,220.0],[86.5,221.0],[85.5,227.0],[83.5,230.0],[82.5,234.0],[77.0,240.5],[68.0,246.5],[60.0,249.5],[50.0,249.5],[49.0,248.5],[45.0,248.5],[37.0,244.5],[30.5,238.0],[26.5,228.0],[26.5,220.0],[29.5,213.0],[39.0,203.5],[58.0,196.5],[61.0,196.5],[67.0,193.5],[78.5,181.0],[79.5,172.0],[77.0,169.5],[74.0,169.5],[70.0,171.5],[60.0,180.5],[59.0,180.5],[52.0,188.5],[48.0,191.5],[46.0,191.5],[42.0,193.5],[30.0,193.5],[22.5,188.0],[19.5,182.0],[19.5,172.0],[21.5,167.0],[26.0,162.5],[34.0,158.5],[42.0,157.5],[43.0,156.5],[48.0,156.5],[49.0,155.5],[57.0,155.5],[58.0,154.5],[62.0,154.5],[72.0,150.5],[74.0,148.5],[77.0,147.5],[82.5,141.0],[84.5,137.0],[84.5,131.0],[83.5,130.0],[83.5,128.0],[78.0,123.5],[67.0,124.5],[59.0,128.5],[48.0,138.5],[43.0,140.5],[40.0,143.5],[32.0,147.5],[20.0,147.5],[13.0,144.5],[7.5,140.0],[3.5,133.0],[2.5,123.0],[3.5,122.0],[3.5,118.0],[5.5,114.0],[7.5,111.0],[14.0,105.5],[24.0,101.5],[36.0,101.5],[40.0,103.5],[48.0,104.5],[55.0,107.5],[60.0,107.5],[62.0,108.5],[63.0,107.5],[69.0,107.5],[72.0,105.5],[74.0,105.5],[79.5,99.0],[79.5,94.0],[78.5,93.0],[77.5,88.0],[74.0,84.5],[70.0,82.5],[64.0,81.5],[63.0,82.5],[60.0,82.5],[59.0,83.5],[54.0,84.5],[49.0,87.5],[42.0,88.5],[41.0,89.5],[32.0,89.5],[22.0,84.5],[16.5,79.0],[14.5,75.0],[14.5,73.0],[13.5,72.0],[13.5,61.0],[17.5,52.0],[25.0,44.5],[40.0,36.5],[44.0,36.5],[48.0,34.5],[51.0,34.5],[59.0,30.5],[72.0,20.5],[76.0,18.5],[78.0,18.5],[81.0,16.5],[93.0,15.5],[94.0,16.5],[98.0,16.5],[105.0,19.5],[113.5,28.0],[115.5,33.0],[115.5,36.0],[116.5,37.0],[116.5,42.0],[115.5,43.0],[115.5,47.0],[114.5,49.0],[95.5,67.0],[93.5,71.0],[93.5,78.0],[94.5,79.0],[95.5,86.0],[98.5,91.0],[104.0,96.5],[111.0,96.5],[117.0,93.5],[120.5,90.0],[124.5,84.0],[125.5,79.0],[126.5,78.0],[126.5,70.0],[127.5,69.0],[126.5,56.0],[124.5,52.0],[123.5,44.0],[119.5,33.0],[119.5,24.0],[125.5,12.0],[134.0,4.5],[139.0,3.5],[140.0,2.5],[149.0,2.5],[153.0,4.5],[155.0,4.5],[160.0,7.5],[164.5,12.0],[168.5,23.0],[168.5,31.0],[167.5,32.0],[167.5,35.0],[161.5,46.0],[152.5,56.0],[147.5,66.0],[147.5,69.0],[146.5,70.0],[146.5,80.0],[148.5,84.0],[153.0,88.5],[157.0,89.5],[158.0,88.5],[161.0,88.5],[174.0,79.5],[176.0,79.5],[180.0,77.5],[187.0,77.5],[191.0,80.5],[194.0,81.5],[197.5,86.0],[197.5,88.0],[198.5,89.0],[198.5,96.0],[193.0,104.5],[186.0,107.5],[177.0,106.5],[173.0,104.5],[168.0,104.5],[167.0,103.5],[159.0,103.5],[158.0,104.5],[155.0,104.5],[150.5,109.0],[149.5,115.0],[148.5,116.0],[148.5,127.0],[149.5,128.0],[150.5,137.0],[152.5,141.0],[156.0,144.5],[161.0,144.5],[167.5,137.0],[172.5,126.0],[180.0,118.5],[184.0,116.5],[194.0,116.5],[200.5,121.0],[203.5,125.0],[205.5,130.0],[205.5,142.0],[202.5,146.0],[201.5,149.0],[198.0,152.5],[193.0,155.5],[190.0,155.5],[189.0,156.5],[179.0,156.5],[170.0,161.5],[166.5,165.0],[163.5,173.0],[164.5,175.0],[164.5,183.0],[173.0,192.5],[175.0,193.5],[180.0,193.5],[183.5,190.0],[190.5,180.0],[200.0,170.5],[202.0,169.5],[210.0,169.5],[214.0,171.5],[220.0,177.5],[221.0,177.5],[224.5,182.0],[229.5,192.0],[230.5,198.0],[231.5,199.0],[231.5,203.0],[232.5,204.0],[232.5,215.0],[231.5,216.0],[231.5,220.0],[230.5,221.0],[229.5,229.0],[226.5,235.0],[221.0,241.5],[217.0,243.5],[211.0,248.5],[200.0,252.5]],[[199.0,73.5],[187.0,73.5],[179.0,69.5],[175.5,66.0],[173.5,62.0],[173.5,52.0],[177.5,44.0],[185.0,36.5],[190.0,34.5],[194.0,34.5],[195.0,33.5],[204.0,34.5],[209.0,36.5],[213.5,41.0],[217.5,51.0],[217.5,53.0],[216.5,54.0],[216.5,60.0],[212.5,67.0],[208.0,70.5],[206.0,70.5],[203.0,72.5],[200.0,72.5],[199.0,73.5]]],"counters":[]},{"w":210,"h":244,"sourceBounds":[436,529,646,773],"contours":[[[68.0,240.5],[53.0,240.5],[45.0,235.5],[40.5,231.0],[39.5,228.0],[37.5,226.0],[34.5,219.0],[34.5,216.0],[32.5,211.0],[32.5,198.0],[33.5,197.0],[34.5,187.0],[35.5,186.0],[35.5,183.0],[43.5,161.0],[43.5,157.0],[46.5,150.0],[46.5,147.0],[49.5,141.0],[49.5,136.0],[50.5,135.0],[50.5,130.0],[51.5,128.0],[50.0,126.5],[48.0,126.5],[38.0,140.5],[30.0,144.5],[21.0,144.5],[17.0,142.5],[7.5,134.0],[7.5,132.0],[3.5,126.0],[3.5,123.0],[2.5,122.0],[2.5,107.0],[3.5,106.0],[4.5,101.0],[11.5,87.0],[19.0,79.5],[27.0,75.5],[36.0,75.5],[37.0,76.5],[39.0,76.5],[44.5,81.0],[49.5,90.0],[50.0,92.5],[51.0,93.5],[53.0,93.5],[54.5,92.0],[53.5,90.0],[53.5,82.0],[50.5,74.0],[49.5,67.0],[44.5,57.0],[42.5,55.0],[42.5,53.0],[39.5,49.0],[36.5,41.0],[36.5,30.0],[37.5,29.0],[38.5,22.0],[44.5,13.0],[49.0,9.5],[53.0,7.5],[59.0,7.5],[60.0,6.5],[67.0,7.5],[76.0,11.5],[81.5,18.0],[85.5,28.0],[85.5,37.0],[84.5,38.0],[81.5,49.0],[79.5,52.0],[79.5,54.0],[71.5,68.0],[70.5,74.0],[69.5,75.0],[69.5,79.0],[73.0,83.5],[83.0,83.5],[86.0,85.5],[94.0,94.5],[96.0,94.5],[97.5,93.0],[99.5,85.0],[102.5,79.0],[115.5,62.0],[117.5,52.0],[118.5,51.0],[119.5,41.0],[120.5,40.0],[121.5,28.0],[127.5,15.0],[134.0,7.5],[141.0,3.5],[143.0,3.5],[144.0,2.5],[158.0,2.5],[159.0,3.5],[161.0,3.5],[172.5,14.0],[173.5,20.0],[174.5,21.0],[173.5,32.0],[169.5,40.0],[162.0,48.5],[151.0,54.5],[142.0,61.5],[134.0,65.5],[127.5,72.0],[126.5,76.0],[124.5,79.0],[124.5,86.0],[129.0,89.5],[134.0,89.5],[135.0,88.5],[137.0,88.5],[145.0,83.5],[159.0,72.5],[167.0,68.5],[171.0,68.5],[172.0,67.5],[181.0,67.5],[182.0,68.5],[186.0,68.5],[192.0,71.5],[198.5,78.0],[202.5,84.0],[205.5,92.0],[206.5,105.0],[205.5,106.0],[204.5,112.0],[201.5,116.0],[193.5,132.0],[193.5,134.0],[191.5,138.0],[191.5,141.0],[190.5,142.0],[190.5,147.0],[189.5,148.0],[189.5,160.0],[190.5,161.0],[191.5,169.0],[192.5,170.0],[194.5,180.0],[195.5,181.0],[195.5,185.0],[198.5,193.0],[198.5,202.0],[197.5,203.0],[195.5,211.0],[193.5,215.0],[189.0,219.5],[177.0,225.5],[172.0,225.5],[171.0,226.5],[157.0,226.5],[156.0,225.5],[137.0,226.5],[136.0,227.5],[133.0,227.5],[127.0,232.5],[120.0,235.5],[108.0,236.5],[107.0,235.5],[102.0,234.5],[95.5,228.0],[91.5,222.0],[90.5,214.0],[89.5,213.0],[89.5,208.0],[88.5,207.0],[87.5,198.0],[86.5,197.0],[86.5,185.0],[85.5,184.0],[85.5,178.0],[86.5,177.0],[87.5,165.0],[88.5,164.0],[88.5,162.0],[90.5,158.0],[90.5,155.0],[93.5,149.0],[93.5,147.0],[97.5,137.0],[97.5,134.0],[98.5,133.0],[98.5,118.0],[97.0,116.5],[95.0,116.5],[93.5,118.0],[93.5,120.0],[91.5,122.0],[90.5,125.0],[87.0,128.5],[82.0,130.5],[80.0,130.5],[73.0,127.5],[67.0,120.5],[65.0,120.5],[63.5,122.0],[63.5,129.0],[62.5,130.0],[62.5,150.0],[63.5,151.0],[63.5,157.0],[66.5,164.0],[66.5,167.0],[73.5,181.0],[74.5,186.0],[80.5,198.0],[81.5,204.0],[83.5,208.0],[83.5,220.0],[82.5,221.0],[81.5,227.0],[78.5,232.0],[73.0,237.5],[68.0,240.5]],[[80.5,118.0],[84.0,115.5],[86.0,115.5],[89.5,112.0],[89.5,105.0],[86.5,102.0],[85.5,99.0],[81.5,95.0],[81.5,94.0],[80.0,92.5],[78.0,92.5],[77.5,98.0],[74.5,103.0],[74.5,113.0],[75.5,114.0],[75.5,116.0],[78.0,118.5],[80.5,118.0]],[[140.5,143.0],[146.0,142.5],[147.0,141.5],[150.0,141.5],[155.0,139.5],[160.5,135.0],[164.5,128.0],[164.5,123.0],[165.5,122.0],[164.5,114.0],[162.5,110.0],[160.0,107.5],[154.0,104.5],[141.0,103.5],[137.0,105.5],[131.0,106.5],[124.0,111.5],[119.5,117.0],[119.5,119.0],[118.5,120.0],[118.5,129.0],[121.5,135.0],[127.0,140.5],[131.0,142.5],[136.0,142.5],[137.0,143.5],[140.5,143.0]],[[140.5,197.0],[144.0,196.5],[154.0,192.5],[162.5,184.0],[163.5,182.0],[163.5,179.0],[165.5,176.0],[165.5,168.0],[160.0,161.5],[156.0,159.5],[140.0,157.5],[139.0,158.5],[132.0,158.5],[131.0,159.5],[123.0,161.5],[117.5,167.0],[113.5,174.0],[113.5,186.0],[114.5,187.0],[114.5,189.0],[120.0,194.5],[128.0,197.5],[140.5,197.0]]],"counters":[4,5,7]},{"w":242,"h":255,"sourceBounds":[660,485,902,740],"contours":[[[53.0,236.5],[44.0,236.5],[39.0,234.5],[29.5,226.0],[26.5,222.0],[24.5,217.0],[24.5,203.0],[25.5,202.0],[25.5,199.0],[28.5,195.0],[31.5,188.0],[39.5,177.0],[40.5,172.0],[45.5,163.0],[46.5,155.0],[47.5,154.0],[47.5,145.0],[45.0,142.5],[43.0,142.5],[39.5,146.0],[37.5,153.0],[31.5,162.0],[26.0,167.5],[21.0,169.5],[15.0,168.5],[8.0,164.5],[5.5,162.0],[3.5,158.0],[2.5,149.0],[3.5,148.0],[3.5,144.0],[6.5,136.0],[16.0,128.5],[24.0,126.5],[28.0,123.5],[33.0,121.5],[41.5,113.0],[44.5,107.0],[44.5,103.0],[45.5,102.0],[45.5,84.0],[43.5,81.0],[42.5,76.0],[41.5,75.0],[41.5,72.0],[39.5,68.0],[39.5,65.0],[38.5,64.0],[38.5,60.0],[37.5,59.0],[37.5,50.0],[38.5,49.0],[38.5,43.0],[41.5,36.0],[46.5,29.0],[54.5,21.0],[54.5,20.0],[64.0,14.5],[66.0,14.5],[70.0,12.5],[74.0,12.5],[75.0,11.5],[84.0,11.5],[85.0,12.5],[89.0,12.5],[98.0,16.5],[101.5,20.0],[101.5,21.0],[105.5,25.0],[108.5,31.0],[108.5,37.0],[110.0,38.5],[112.0,38.5],[113.5,37.0],[113.5,31.0],[114.5,30.0],[114.5,25.0],[115.5,24.0],[116.5,19.0],[118.5,15.0],[124.0,8.5],[136.0,2.5],[146.0,2.5],[151.0,4.5],[153.0,6.5],[156.5,8.0],[162.5,16.0],[162.5,18.0],[163.5,19.0],[163.5,30.0],[157.5,40.0],[154.0,43.5],[153.0,43.5],[137.5,60.0],[136.5,65.0],[139.0,67.5],[143.0,66.5],[153.0,61.5],[158.0,56.5],[162.0,54.5],[171.0,46.5],[177.0,43.5],[179.0,41.5],[183.0,40.5],[186.0,38.5],[198.0,37.5],[199.0,36.5],[201.0,37.5],[207.0,37.5],[208.0,38.5],[216.0,40.5],[218.0,42.5],[224.0,45.5],[231.5,53.0],[235.5,60.0],[236.5,66.0],[237.5,67.0],[237.5,79.0],[236.5,80.0],[235.5,86.0],[232.5,92.0],[219.0,104.5],[213.0,107.5],[204.0,108.5],[203.0,109.5],[192.0,109.5],[191.0,108.5],[189.0,108.5],[183.5,104.0],[180.5,96.0],[180.5,92.0],[179.5,91.0],[179.5,86.0],[178.5,85.0],[178.5,83.0],[174.0,78.5],[169.0,76.5],[154.0,77.5],[143.0,81.5],[137.0,82.5],[133.0,85.5],[130.0,86.5],[127.0,89.5],[124.0,90.5],[115.5,99.0],[112.5,106.0],[107.5,112.0],[104.5,118.0],[98.0,125.5],[93.0,127.5],[86.0,127.5],[78.5,121.0],[78.5,119.0],[77.5,118.0],[77.5,109.0],[79.5,105.0],[85.0,98.5],[94.0,92.5],[103.5,84.0],[103.5,83.0],[108.5,78.0],[112.5,70.0],[112.5,68.0],[113.5,67.0],[113.5,61.0],[114.5,60.0],[114.5,47.0],[112.0,42.5],[110.0,42.5],[108.5,44.0],[107.5,51.0],[102.5,60.0],[94.5,69.0],[91.5,74.0],[76.5,89.0],[73.5,94.0],[68.5,99.0],[63.5,109.0],[63.5,112.0],[62.5,113.0],[62.5,123.0],[63.5,124.0],[64.5,135.0],[63.5,136.0],[63.5,145.0],[62.5,146.0],[62.5,166.0],[63.5,167.0],[63.5,171.0],[64.5,172.0],[65.5,178.0],[71.5,190.0],[71.5,193.0],[73.5,198.0],[73.5,203.0],[74.5,204.0],[74.5,211.0],[73.5,212.0],[72.5,219.0],[70.5,221.0],[66.5,229.0],[61.0,233.5],[53.0,236.5]],[[123.0,251.5],[116.0,251.5],[115.0,250.5],[107.0,249.5],[105.0,247.5],[103.0,247.5],[98.0,242.5],[97.0,242.5],[91.5,237.0],[87.5,229.0],[87.5,227.0],[86.5,226.0],[86.5,215.0],[87.5,214.0],[88.5,209.0],[98.0,198.5],[109.0,193.5],[119.0,193.5],[120.0,192.5],[124.0,192.5],[128.0,190.5],[136.5,181.0],[140.5,172.0],[140.5,167.0],[141.5,166.0],[141.5,161.0],[142.5,160.0],[142.5,145.0],[141.5,144.0],[140.5,137.0],[133.5,125.0],[133.5,123.0],[130.5,116.0],[130.5,107.0],[134.5,98.0],[144.0,90.5],[146.0,89.5],[157.0,89.5],[165.0,93.5],[169.5,98.0],[172.5,105.0],[171.5,115.0],[167.5,123.0],[167.5,125.0],[165.5,127.0],[162.5,133.0],[162.5,136.0],[159.5,143.0],[159.5,147.0],[158.5,148.0],[158.5,161.0],[159.5,162.0],[159.5,168.0],[161.5,172.0],[162.5,179.0],[164.5,183.0],[164.5,188.0],[165.5,189.0],[165.5,211.0],[164.5,212.0],[163.5,219.0],[161.5,223.0],[154.0,233.5],[153.0,233.5],[147.0,239.5],[139.0,245.5],[135.0,247.5],[133.0,247.5],[128.0,250.5],[124.0,250.5],[123.0,251.5]],[[217.0,205.5],[205.0,205.5],[204.0,204.5],[199.0,203.5],[193.0,199.5],[185.5,192.0],[184.5,189.0],[181.5,185.0],[179.5,178.0],[174.5,172.0],[172.5,167.0],[168.5,162.0],[168.5,160.0],[166.5,156.0],[166.5,153.0],[165.5,152.0],[165.5,150.0],[166.5,149.0],[166.5,144.0],[170.5,136.0],[177.0,130.5],[179.0,130.5],[180.0,129.5],[186.0,129.5],[192.0,132.5],[194.5,135.0],[196.5,139.0],[204.0,146.5],[224.0,155.5],[227.0,157.5],[235.5,167.0],[237.5,172.0],[237.5,175.0],[238.5,176.0],[238.5,182.0],[237.5,183.0],[236.5,189.0],[233.5,195.0],[227.0,201.5],[222.0,204.5],[218.0,204.5],[217.0,205.5]],[[96.0,190.5],[86.0,190.5],[82.0,188.5],[77.5,184.0],[77.5,182.0],[76.5,181.0],[76.5,171.0],[77.5,170.0],[77.5,167.0],[81.5,162.0],[89.5,147.0],[96.0,140.5],[103.0,135.5],[108.0,133.5],[118.0,133.5],[122.5,136.0],[126.5,140.0],[128.5,144.0],[128.5,156.0],[122.5,168.0],[112.5,178.0],[112.5,179.0],[96.0,190.5]]],"counters":[]},{"w":259,"h":256,"sourceBounds":[176,790,435,1046],"contours":[[[224.0,246.5],[222.0,246.5],[221.0,245.5],[216.0,245.5],[206.0,240.5],[197.5,232.0],[189.5,218.0],[182.0,211.5],[174.0,211.5],[172.0,212.5],[163.0,221.5],[154.0,226.5],[148.0,226.5],[147.0,225.5],[145.0,225.5],[138.5,220.0],[138.5,218.0],[137.5,217.0],[137.5,211.0],[140.5,206.0],[145.0,201.5],[153.0,197.5],[160.0,195.5],[163.5,192.0],[166.5,187.0],[166.5,183.0],[165.5,182.0],[164.5,177.0],[152.0,164.5],[146.0,161.5],[144.0,161.5],[140.5,165.0],[138.5,169.0],[137.5,175.0],[136.5,176.0],[136.5,181.0],[134.5,186.0],[134.5,197.0],[133.5,198.0],[133.5,202.0],[132.5,203.0],[132.5,208.0],[128.5,216.0],[123.0,221.5],[116.0,224.5],[109.0,224.5],[108.0,223.5],[106.0,223.5],[102.0,221.5],[99.5,219.0],[95.5,211.0],[96.5,201.0],[98.5,198.0],[98.5,196.0],[100.5,192.0],[115.5,178.0],[120.5,169.0],[123.5,166.0],[128.5,153.0],[128.5,150.0],[129.5,149.0],[130.5,142.0],[131.5,141.0],[131.5,134.0],[132.5,133.0],[132.5,114.0],[131.5,113.0],[131.5,107.0],[130.5,106.0],[128.5,96.0],[123.5,86.0],[117.5,77.0],[116.5,68.0],[117.5,67.0],[118.5,61.0],[120.5,57.0],[126.0,51.5],[130.0,49.5],[139.0,49.5],[145.0,52.5],[150.5,58.0],[151.5,61.0],[156.0,65.5],[157.0,65.5],[160.5,62.0],[161.5,57.0],[159.5,52.0],[153.5,46.0],[146.5,35.0],[146.5,33.0],[145.5,32.0],[145.5,22.0],[149.5,13.0],[155.0,7.5],[160.0,4.5],[162.0,4.5],[166.0,2.5],[173.0,2.5],[174.0,3.5],[179.0,4.5],[188.5,13.0],[190.5,17.0],[190.5,19.0],[191.5,20.0],[191.5,29.0],[182.5,48.0],[182.5,53.0],[185.0,55.5],[189.0,55.5],[191.0,54.5],[202.0,44.5],[208.0,40.5],[213.0,39.5],[214.0,38.5],[223.0,38.5],[232.0,42.5],[238.0,46.5],[240.5,49.0],[244.5,57.0],[244.5,72.0],[240.5,81.0],[228.0,92.5],[226.0,92.5],[222.0,94.5],[214.0,94.5],[208.5,102.0],[211.0,105.5],[216.0,107.5],[220.5,112.0],[223.5,119.0],[223.5,130.0],[222.5,131.0],[222.5,133.0],[217.5,142.0],[215.5,144.0],[212.5,150.0],[211.5,156.0],[210.5,157.0],[210.5,169.0],[211.5,170.0],[212.5,176.0],[215.5,182.0],[220.0,186.5],[227.0,189.5],[230.0,189.5],[231.0,190.5],[234.0,190.5],[238.0,192.5],[240.0,192.5],[243.0,194.5],[252.5,205.0],[254.5,210.0],[254.5,216.0],[255.5,217.0],[254.5,219.0],[254.5,223.0],[249.5,233.0],[242.0,240.5],[237.0,243.5],[235.0,243.5],[231.0,245.5],[225.0,245.5],[224.0,246.5]],[[74.0,252.5],[64.0,252.5],[56.0,248.5],[54.0,248.5],[45.5,237.0],[45.5,234.0],[44.5,233.0],[44.5,225.0],[45.5,224.0],[46.5,218.0],[51.5,209.0],[53.5,207.0],[54.5,204.0],[61.5,195.0],[69.5,179.0],[69.5,176.0],[71.5,171.0],[72.5,160.0],[71.5,159.0],[71.5,155.0],[69.0,152.5],[67.0,152.5],[63.5,156.0],[57.5,165.0],[56.5,169.0],[54.5,172.0],[53.5,177.0],[47.5,189.0],[42.0,194.5],[36.0,198.5],[34.0,198.5],[31.0,200.5],[19.0,200.5],[10.0,195.5],[4.5,189.0],[2.5,184.0],[2.5,172.0],[3.5,171.0],[4.5,166.0],[8.5,160.0],[22.0,147.5],[32.0,143.5],[37.0,142.5],[40.0,140.5],[42.0,140.5],[50.0,136.5],[53.0,133.5],[65.0,126.5],[70.5,120.0],[71.5,117.0],[75.5,112.0],[78.5,105.0],[78.5,96.0],[75.0,92.5],[68.0,92.5],[62.0,96.5],[44.0,113.5],[34.0,117.5],[25.0,117.5],[24.0,116.5],[21.0,116.5],[15.0,110.5],[14.0,110.5],[10.5,106.0],[8.5,101.0],[8.5,89.0],[9.5,88.0],[9.5,86.0],[10.5,84.0],[21.0,74.5],[23.0,74.5],[26.0,72.5],[29.0,72.5],[30.0,71.5],[35.0,71.5],[36.0,70.5],[46.0,71.5],[47.0,72.5],[54.0,72.5],[55.0,73.5],[73.0,73.5],[78.0,71.5],[82.0,71.5],[84.5,69.0],[82.0,65.5],[80.0,65.5],[70.0,60.5],[68.0,60.5],[64.0,58.5],[60.0,58.5],[55.0,56.5],[52.0,56.5],[47.0,53.5],[45.0,53.5],[37.5,48.0],[31.5,39.0],[30.5,31.0],[31.5,30.0],[31.5,26.0],[33.5,23.0],[34.5,19.0],[42.0,12.5],[48.0,9.5],[55.0,8.5],[56.0,7.5],[62.0,7.5],[63.0,8.5],[67.0,8.5],[71.0,10.5],[74.0,10.5],[76.0,12.5],[84.0,16.5],[92.5,25.0],[97.5,34.0],[97.5,38.0],[98.5,39.0],[100.5,67.0],[101.5,68.0],[102.5,73.0],[108.5,82.0],[108.5,87.0],[109.5,88.0],[109.5,93.0],[108.5,94.0],[107.5,99.0],[105.5,101.0],[105.5,104.0],[108.0,105.5],[112.0,103.5],[118.0,103.5],[119.0,104.5],[121.0,104.5],[126.5,111.0],[126.5,121.0],[120.0,129.5],[112.0,132.5],[102.0,132.5],[101.0,133.5],[97.0,133.5],[93.5,136.0],[93.5,138.0],[98.0,141.5],[112.0,142.5],[116.0,144.5],[118.5,147.0],[120.5,151.0],[120.5,160.0],[118.5,164.0],[115.0,167.5],[111.0,169.5],[104.0,169.5],[100.5,167.0],[94.5,157.0],[91.0,153.5],[89.0,153.5],[86.5,156.0],[86.5,162.0],[85.5,163.0],[85.5,174.0],[84.5,175.0],[84.5,185.0],[85.5,186.0],[86.5,195.0],[90.5,206.0],[90.5,210.0],[91.5,211.0],[93.5,225.0],[92.5,226.0],[92.5,232.0],[88.5,241.0],[79.0,250.5],[74.0,252.5]],[[95.5,71.0],[96.5,70.0],[96.5,67.0],[93.0,63.5],[89.0,64.5],[86.5,67.0],[86.5,69.0],[88.0,70.5],[90.0,70.5],[91.0,71.5],[95.5,71.0]],[[195.5,105.0],[198.0,103.5],[203.0,103.5],[209.5,96.0],[209.5,93.0],[205.5,87.0],[205.5,75.0],[202.0,70.5],[199.0,68.5],[195.0,68.5],[194.0,69.5],[189.0,70.5],[182.5,78.0],[181.5,80.0],[181.5,84.0],[180.5,85.0],[180.5,93.0],[183.5,101.0],[188.0,105.5],[195.5,105.0]],[[154.5,125.0],[163.5,116.0],[163.5,113.0],[165.5,109.0],[165.5,104.0],[166.5,103.0],[166.5,96.0],[165.5,95.0],[164.5,88.0],[161.0,84.5],[156.0,84.5],[151.5,89.0],[150.5,92.0],[148.5,94.0],[147.5,100.0],[146.5,101.0],[146.5,106.0],[145.5,107.0],[145.5,118.0],[146.5,119.0],[146.5,122.0],[150.0,125.5],[154.5,125.0]],[[94.5,122.0],[101.5,114.0],[102.5,112.0],[102.0,108.5],[100.0,108.5],[97.0,110.5],[92.5,115.0],[91.5,117.0],[91.5,121.0],[93.0,122.5],[94.5,122.0]],[[101.5,128.0],[105.0,127.5],[106.0,126.5],[108.0,127.5],[112.0,127.5],[118.5,121.0],[118.5,120.0],[112.0,113.5],[107.0,114.5],[103.5,119.0],[103.5,121.0],[98.5,125.0],[98.5,127.0],[100.0,128.5],[101.5,128.0]],[[182.5,162.0],[187.0,160.5],[190.5,157.0],[192.5,153.0],[192.5,151.0],[193.5,150.0],[193.5,138.0],[192.5,137.0],[192.5,135.0],[188.0,129.5],[184.0,127.5],[178.0,127.5],[171.0,130.5],[166.5,135.0],[162.5,143.0],[162.5,148.0],[165.5,154.0],[172.0,160.5],[177.0,161.5],[178.0,162.5],[182.5,162.0]],[[107.5,158.0],[109.5,156.0],[109.5,154.0],[108.0,152.5],[104.0,152.5],[101.5,155.0],[104.0,158.5],[107.5,158.0]]],"counters":[4,5,7,8,9,10,12]},{"w":238,"h":266,"sourceBounds":[452,818,690,1084],"contours":[[[100.0,107.5],[93.0,106.5],[90.0,104.5],[87.5,99.0],[87.5,96.0],[89.5,91.0],[108.5,73.0],[111.5,67.0],[112.5,62.0],[114.5,59.0],[115.5,50.0],[116.5,49.0],[115.5,35.0],[114.5,34.0],[114.5,23.0],[117.5,17.0],[117.5,15.0],[121.5,9.0],[127.0,4.5],[129.0,4.5],[133.0,2.5],[142.0,2.5],[147.0,4.5],[152.5,9.0],[156.5,17.0],[156.5,22.0],[153.5,29.0],[147.5,35.0],[150.0,38.5],[155.0,38.5],[156.0,37.5],[164.0,35.5],[177.0,27.5],[183.0,22.5],[187.0,21.5],[190.0,19.5],[194.0,19.5],[195.0,18.5],[207.0,19.5],[213.5,25.0],[215.5,28.0],[217.5,37.0],[214.5,43.0],[209.0,48.5],[207.0,48.5],[203.0,50.5],[195.0,50.5],[194.0,51.5],[192.0,50.5],[188.0,50.5],[187.0,49.5],[163.0,49.5],[162.0,50.5],[153.0,50.5],[149.0,52.5],[139.0,54.5],[131.0,59.5],[128.5,62.0],[126.5,66.0],[121.5,71.0],[119.5,78.0],[117.5,80.0],[112.5,89.0],[109.5,99.0],[103.0,106.5],[101.0,106.5],[100.0,107.5]],[[61.0,235.5],[50.0,235.5],[45.0,233.5],[35.5,225.0],[33.5,220.0],[33.5,207.0],[34.5,206.0],[35.5,201.0],[41.5,194.0],[42.5,191.0],[52.5,178.0],[59.5,160.0],[59.5,155.0],[60.5,154.0],[60.5,141.0],[59.5,140.0],[58.5,134.0],[56.0,131.5],[53.0,131.5],[48.5,136.0],[44.5,146.0],[44.5,149.0],[43.5,150.0],[41.5,158.0],[36.5,167.0],[31.0,172.5],[26.0,173.5],[25.0,174.5],[19.0,174.5],[18.0,173.5],[16.0,173.5],[10.0,170.5],[5.5,166.0],[2.5,160.0],[2.5,147.0],[5.5,140.0],[13.0,131.5],[22.0,125.5],[35.0,119.5],[41.0,115.5],[45.5,111.0],[49.5,105.0],[49.5,102.0],[50.5,101.0],[50.5,82.0],[49.5,81.0],[48.5,74.0],[45.5,67.0],[44.5,55.0],[45.5,54.0],[45.5,46.0],[51.5,33.0],[57.0,26.5],[63.0,23.5],[68.0,19.5],[77.0,18.5],[78.0,17.5],[87.0,17.5],[88.0,18.5],[92.0,18.5],[99.0,21.5],[107.5,30.0],[109.5,35.0],[109.5,38.0],[110.5,39.0],[110.5,53.0],[106.5,62.0],[98.0,71.5],[82.5,86.0],[78.5,92.0],[72.5,98.0],[66.5,109.0],[65.5,117.0],[69.5,124.0],[74.5,129.0],[74.5,137.0],[75.5,138.0],[75.5,144.0],[74.5,145.0],[74.5,156.0],[75.5,157.0],[76.5,170.0],[78.5,174.0],[78.5,178.0],[80.5,183.0],[80.5,188.0],[82.5,193.0],[82.5,212.0],[81.5,213.0],[79.5,221.0],[75.5,227.0],[70.0,231.5],[61.0,235.5]],[[105.0,262.5],[90.0,262.5],[89.0,261.5],[87.0,261.5],[77.5,253.0],[75.5,249.0],[75.5,243.0],[78.5,235.0],[84.0,229.5],[93.0,225.5],[96.0,225.5],[97.0,224.5],[121.0,224.5],[122.0,223.5],[129.0,223.5],[132.0,221.5],[137.0,220.5],[145.0,216.5],[149.0,212.5],[153.0,210.5],[163.5,199.0],[163.5,197.0],[166.5,194.0],[171.5,186.0],[172.5,177.0],[171.5,176.0],[171.5,173.0],[169.0,170.5],[164.0,170.5],[163.0,171.5],[161.0,171.5],[158.5,174.0],[158.5,176.0],[156.5,180.0],[152.5,184.0],[148.5,193.0],[146.5,195.0],[141.5,205.0],[135.0,211.5],[126.0,217.5],[119.0,217.5],[118.0,216.5],[116.0,216.5],[111.5,213.0],[110.5,211.0],[110.5,206.0],[112.5,202.0],[116.0,198.5],[120.0,196.5],[130.0,194.5],[137.0,187.5],[138.5,187.0],[143.5,180.0],[143.5,177.0],[144.5,176.0],[143.5,171.0],[141.0,168.5],[139.0,168.5],[135.0,172.5],[134.0,172.5],[130.5,176.0],[125.5,185.0],[116.0,194.5],[109.0,197.5],[101.0,197.5],[100.0,196.5],[98.0,196.5],[93.5,193.0],[91.5,190.0],[91.5,182.0],[94.5,176.0],[100.0,171.5],[104.0,169.5],[106.0,169.5],[109.0,167.5],[114.0,166.5],[118.0,163.5],[120.0,163.5],[125.0,160.5],[131.5,154.0],[132.5,150.0],[129.0,146.5],[124.0,146.5],[116.0,150.5],[104.0,159.5],[102.0,159.5],[101.0,160.5],[90.0,160.5],[88.0,159.5],[82.5,153.0],[82.5,148.0],[81.5,146.0],[87.0,136.5],[90.0,136.5],[98.0,133.5],[113.0,132.5],[118.0,130.5],[122.5,126.0],[122.5,119.0],[119.5,114.0],[119.5,109.0],[118.5,108.0],[118.5,93.0],[121.5,85.0],[122.5,78.0],[129.5,70.0],[129.5,69.0],[131.0,68.5],[137.0,62.5],[142.0,59.5],[145.0,59.5],[149.0,57.5],[158.0,56.5],[159.0,55.5],[168.0,55.5],[169.0,54.5],[177.0,54.5],[178.0,55.5],[181.0,55.5],[182.0,56.5],[192.0,58.5],[200.5,66.0],[202.5,69.0],[203.5,74.0],[204.5,75.0],[204.5,82.0],[203.5,83.0],[202.5,90.0],[195.5,101.0],[190.0,106.5],[184.0,110.5],[170.0,116.5],[167.0,116.5],[163.0,118.5],[156.0,119.5],[152.0,121.5],[147.0,121.5],[146.0,122.5],[132.0,122.5],[131.0,121.5],[129.0,121.5],[126.5,124.0],[125.5,130.0],[127.0,131.5],[129.0,130.5],[135.0,130.5],[136.0,129.5],[140.0,129.5],[145.0,127.5],[150.0,127.5],[158.0,124.5],[161.0,124.5],[162.0,123.5],[173.0,120.5],[178.0,117.5],[180.0,117.5],[186.0,113.5],[191.0,112.5],[196.0,109.5],[202.0,108.5],[203.0,107.5],[216.0,106.5],[217.0,107.5],[222.0,108.5],[227.5,114.0],[229.5,118.0],[229.5,130.0],[226.5,136.0],[222.0,139.5],[217.0,141.5],[206.0,141.5],[205.0,140.5],[199.0,140.5],[194.0,138.5],[182.0,137.5],[181.0,136.5],[168.0,136.5],[160.0,139.5],[157.5,142.0],[155.5,146.0],[155.5,151.0],[161.0,155.5],[176.0,155.5],[184.0,152.5],[194.0,151.5],[197.0,149.5],[205.0,149.5],[206.0,150.5],[211.0,150.5],[212.0,151.5],[214.0,151.5],[224.0,157.5],[227.5,162.0],[230.5,168.0],[230.5,170.0],[232.5,173.0],[233.5,179.0],[234.5,180.0],[234.5,191.0],[233.5,192.0],[233.5,197.0],[232.5,198.0],[232.5,201.0],[231.5,202.0],[229.5,210.0],[227.5,213.0],[226.5,218.0],[223.5,224.0],[212.5,237.0],[210.5,241.0],[199.0,250.5],[196.0,251.5],[191.0,255.5],[185.0,256.5],[184.0,257.5],[180.0,257.5],[179.0,258.5],[168.0,257.5],[161.0,253.5],[154.5,247.0],[152.5,242.0],[152.5,238.0],[156.5,228.0],[165.0,219.5],[170.0,218.5],[186.0,210.5],[195.5,201.0],[195.5,199.0],[198.5,193.0],[200.5,191.0],[200.5,188.0],[201.5,187.0],[201.5,179.0],[199.5,174.0],[194.0,169.5],[189.0,169.5],[184.5,175.0],[183.5,181.0],[181.5,184.0],[181.5,187.0],[176.5,197.0],[164.5,212.0],[162.5,216.0],[154.0,224.5],[149.0,227.5],[117.0,256.5],[105.0,262.5]],[[160.5,82.0],[167.0,79.5],[170.5,76.0],[170.5,73.0],[168.0,70.5],[149.0,71.5],[144.5,75.0],[143.5,79.0],[147.0,82.5],[160.5,82.0]],[[104.5,93.0],[109.5,88.0],[109.5,86.0],[110.5,85.0],[110.0,81.5],[108.0,81.5],[100.5,88.0],[100.5,92.0],[102.0,93.5],[104.5,93.0]],[[157.5,107.0],[163.0,105.5],[166.0,103.5],[169.5,100.0],[169.5,99.0],[166.0,95.5],[161.0,95.5],[160.0,94.5],[158.0,94.5],[157.0,95.5],[148.0,96.5],[142.5,101.0],[142.5,103.0],[148.0,107.5],[157.5,107.0]],[[105.5,148.0],[111.0,147.5],[114.0,145.5],[116.0,145.5],[119.5,143.0],[119.5,141.0],[118.0,139.5],[115.0,139.5],[114.0,140.5],[106.0,140.5],[100.5,145.0],[100.5,147.0],[102.0,148.5],[105.5,148.0]]],"counters":[6,7,8,10]},{"w":216,"h":271,"sourceBounds":[693,785,909,1056],"contours":[[[30.0,112.5],[23.0,112.5],[16.0,109.5],[8.5,103.0],[7.5,100.0],[4.5,96.0],[4.5,94.0],[2.5,90.0],[2.5,77.0],[3.5,76.0],[3.5,72.0],[7.5,65.0],[7.5,63.0],[15.0,54.5],[21.0,51.5],[23.0,49.5],[25.0,49.5],[28.0,47.5],[31.0,47.5],[32.0,46.5],[46.0,46.5],[47.0,47.5],[52.0,48.5],[57.0,51.5],[63.0,52.5],[67.0,54.5],[70.0,54.5],[71.0,55.5],[79.0,55.5],[82.0,53.5],[84.0,53.5],[88.0,51.5],[90.5,48.0],[88.0,45.5],[85.0,44.5],[80.5,41.0],[75.5,32.0],[75.5,27.0],[79.5,17.0],[83.5,13.0],[83.5,12.0],[89.0,7.5],[99.0,3.5],[102.0,3.5],[103.0,2.5],[120.0,2.5],[121.0,3.5],[128.0,4.5],[133.0,6.5],[141.5,15.0],[143.5,20.0],[143.5,23.0],[144.5,24.0],[144.5,31.0],[143.0,33.5],[131.5,44.0],[131.5,46.0],[133.0,47.5],[135.0,48.5],[139.0,48.5],[144.0,46.5],[148.0,46.5],[149.0,45.5],[152.0,45.5],[168.0,39.5],[181.0,39.5],[186.0,41.5],[193.0,42.5],[198.0,45.5],[208.5,56.0],[211.5,63.0],[211.5,66.0],[212.5,67.0],[212.5,79.0],[208.5,89.0],[201.0,97.5],[187.0,104.5],[177.0,105.5],[167.0,101.5],[162.5,97.0],[160.5,92.0],[160.5,77.0],[158.5,73.0],[152.0,66.5],[144.0,63.5],[135.0,63.5],[134.0,62.5],[130.0,62.5],[129.0,61.5],[124.0,61.5],[120.0,59.5],[111.0,59.5],[110.0,60.5],[104.0,61.5],[102.0,63.5],[96.0,66.5],[90.0,66.5],[89.0,67.5],[87.0,67.5],[85.0,69.5],[83.0,69.5],[78.0,72.5],[73.0,73.5],[67.0,76.5],[57.5,85.0],[57.5,86.0],[49.5,94.0],[46.5,99.0],[37.0,109.5],[35.0,109.5],[30.0,112.5]],[[78.0,267.5],[68.0,267.5],[67.0,266.5],[63.0,266.5],[55.0,262.5],[48.5,257.0],[44.5,251.0],[44.5,249.0],[42.5,246.0],[42.5,244.0],[40.5,240.0],[38.5,229.0],[35.5,223.0],[35.5,220.0],[34.5,219.0],[34.5,216.0],[32.5,211.0],[32.5,205.0],[33.5,204.0],[33.5,201.0],[35.5,196.0],[46.0,184.5],[57.0,179.5],[79.0,179.5],[80.0,178.5],[88.0,177.5],[93.0,174.5],[96.5,171.0],[97.5,169.0],[96.5,164.0],[92.0,160.5],[87.0,160.5],[79.0,163.5],[71.0,164.5],[68.0,166.5],[65.0,166.5],[56.0,171.5],[54.0,171.5],[47.0,177.5],[45.0,177.5],[37.0,181.5],[35.0,181.5],[34.0,182.5],[24.0,182.5],[18.0,179.5],[13.5,175.0],[11.5,170.0],[11.5,161.0],[13.5,156.0],[20.0,149.5],[25.0,147.5],[29.0,147.5],[30.0,146.5],[42.0,147.5],[43.0,148.5],[50.0,148.5],[51.0,149.5],[60.0,150.5],[61.0,151.5],[77.0,151.5],[78.0,150.5],[81.0,150.5],[82.0,149.5],[85.0,149.5],[86.0,148.5],[91.0,147.5],[93.5,145.0],[95.5,141.0],[94.5,136.0],[92.0,133.5],[83.0,134.5],[76.0,137.5],[73.0,137.5],[63.0,142.5],[58.0,142.5],[57.0,141.5],[55.0,141.5],[52.5,138.0],[50.5,134.0],[50.5,130.0],[53.5,124.0],[58.0,120.5],[61.0,120.5],[62.0,119.5],[86.0,120.5],[87.0,119.5],[90.0,119.5],[94.5,114.0],[94.5,109.0],[91.0,105.5],[89.0,105.5],[88.0,106.5],[81.0,107.5],[73.0,111.5],[71.0,113.5],[62.0,113.5],[56.5,109.0],[56.5,107.0],[55.5,106.0],[55.5,100.0],[60.0,93.5],[65.0,91.5],[91.0,92.5],[94.5,88.0],[92.5,79.0],[95.5,72.0],[101.0,68.5],[107.0,68.5],[111.5,71.0],[113.5,75.0],[114.5,83.0],[119.0,88.5],[129.0,83.5],[132.0,83.5],[133.0,82.5],[143.0,82.5],[148.0,84.5],[151.5,91.0],[151.5,96.0],[149.5,100.0],[146.0,103.5],[144.0,103.5],[143.0,104.5],[127.0,104.5],[126.0,103.5],[121.0,103.5],[117.5,107.0],[117.5,110.0],[122.0,113.5],[129.0,113.5],[135.0,110.5],[145.0,110.5],[149.0,112.5],[153.5,117.0],[153.5,123.0],[150.5,128.0],[147.0,130.5],[131.0,130.5],[130.0,129.5],[125.0,129.5],[124.0,130.5],[122.0,130.5],[118.5,134.0],[119.5,138.0],[122.0,140.5],[124.0,140.5],[125.0,141.5],[139.0,140.5],[140.0,139.5],[143.0,139.5],[144.0,138.5],[149.0,137.5],[152.0,135.5],[154.0,135.5],[156.0,133.5],[160.0,132.5],[167.0,128.5],[169.0,128.5],[176.0,125.5],[186.0,124.5],[187.0,125.5],[194.0,126.5],[204.0,133.5],[206.5,138.0],[207.5,145.0],[206.5,146.0],[206.5,149.0],[202.5,157.0],[192.0,164.5],[177.0,164.5],[170.0,161.5],[167.0,161.5],[166.0,160.5],[161.0,159.5],[156.0,156.5],[153.0,156.5],[152.0,155.5],[126.0,155.5],[119.0,158.5],[114.5,163.0],[112.5,167.0],[112.5,170.0],[118.0,174.5],[124.0,175.5],[125.0,174.5],[132.0,173.5],[136.0,171.5],[145.0,171.5],[146.0,170.5],[150.0,170.5],[151.0,171.5],[158.0,171.5],[162.0,173.5],[164.0,173.5],[175.0,180.5],[179.5,186.0],[182.5,194.0],[182.5,205.0],[181.5,206.0],[181.5,209.0],[176.5,218.0],[165.5,230.0],[161.5,240.0],[152.0,249.5],[146.0,253.5],[138.0,256.5],[130.0,257.5],[129.0,258.5],[111.0,258.5],[110.0,257.5],[107.0,257.5],[106.0,258.5],[102.0,258.5],[101.0,259.5],[96.0,259.5],[91.0,261.5],[87.0,264.5],[85.0,264.5],[82.0,266.5],[79.0,266.5],[78.0,267.5]],[[72.5,132.0],[78.0,131.5],[79.5,130.0],[79.5,128.0],[78.0,126.5],[75.0,126.5],[73.0,128.5],[69.5,130.0],[70.0,132.5],[72.5,132.0]],[[102.5,230.0],[114.0,227.5],[123.0,222.5],[127.5,218.0],[130.5,212.0],[131.5,206.0],[129.5,201.0],[125.0,196.5],[118.0,193.5],[102.0,193.5],[88.0,199.5],[82.5,205.0],[79.5,213.0],[79.5,221.0],[81.5,225.0],[87.0,229.5],[89.0,229.5],[90.0,230.5],[102.5,230.0]]],"counters":[3,6]}]];
+let designShapes=[],designCells=[],designReady=false;
+const membraneStates=new Map();
+const morphEase=x=>{x=clamp(x,0,1);return x*x*(3-2*x);};
+
+// Exact squared Euclidean distance transform, used once on vector geometry.
+function distanceTransform(ink,w,h,inside){
+ const scratch=new Float32Array(w*h),out=new Float32Array(w*h),size=Math.max(w,h);
+ const line=new Float64Array(size),result=new Float64Array(size),v=new Int32Array(size),z=new Float64Array(size+1);
+ function scan(n){
+  let k=0;v[0]=0;z[0]=-Infinity;z[1]=Infinity;
+  for(let q=1;q<n;q++){
+   let s=((line[q]+q*q)-(line[v[k]]+v[k]*v[k]))/(2*(q-v[k]));
+   while(s<=z[k]){k--;s=((line[q]+q*q)-(line[v[k]]+v[k]*v[k]))/(2*(q-v[k]));}
+   v[++k]=q;z[k]=s;z[k+1]=Infinity;
+  }
+  k=0;
+  for(let q=0;q<n;q++){while(z[k+1]<q)k++;result[q]=(q-v[k])**2+line[v[k]];}
+ }
+ for(let y=0;y<h;y++){
+  for(let x=0;x<w;x++)line[x]=(!!ink[y*w+x]===inside)?0:1e10;
+  scan(w);for(let x=0;x<w;x++)scratch[y*w+x]=result[x];
+ }
+ for(let x=0;x<w;x++){
+  for(let y=0;y<h;y++)line[y]=scratch[y*w+x];
+  scan(h);for(let y=0;y<h;y++)out[y*w+x]=result[y];
+ }
+ return out;
+}
+function assignSeeds(cost){
+ const n=cost.length,u=new Float64Array(n+1),v=new Float64Array(n+1),p=new Int32Array(n+1),way=new Int32Array(n+1);
+ for(let i=1;i<=n;i++){
+  p[0]=i;let j0=0;const min=new Float64Array(n+1).fill(Infinity),used=new Uint8Array(n+1);
+  do{
+   used[j0]=1;const i0=p[j0];let delta=Infinity,j1=0;
+   for(let j=1;j<=n;j++)if(!used[j]){
+    const value=cost[i0-1][j-1]-u[i0]-v[j];if(value<min[j]){min[j]=value;way[j]=j0;}
+    if(min[j]<delta){delta=min[j];j1=j;}
+   }
+   for(let j=0;j<=n;j++){if(used[j]){u[p[j]]+=delta;v[j]-=delta;}else min[j]-=delta;}
+   j0=j1;
+  }while(p[j0]!==0);
+  do{const j1=way[j0];p[j0]=p[j1];j0=j1;}while(j0!==0);
+ }
+ const match=new Int32Array(n);for(let j=1;j<=n;j++)match[p[j]-1]=j-1;return match;
+}
+function prepareDesignGeometry(){
+ designCells=masks.map(m=>Array(m.sites.length));
+ designShapes=DESIGN_CONTOURS.map((phrase,which)=>phrase.map((source,id)=>{
+  const gridScale=160/Math.max(source.w,source.h),pad=12;
+  const w=Math.ceil(source.w*gridScale)+2*pad,h=Math.ceil(source.h*gridScale)+2*pad;
+  const raster=document.createElement('canvas');raster.width=w;raster.height=h;
+  const g=raster.getContext('2d',{willReadFrequently:true});g.beginPath();
+  for(const loop of source.contours){
+   loop.forEach(([x,y],i)=>{if(i)g.lineTo(x*gridScale+pad,y*gridScale+pad);else g.moveTo(x*gridScale+pad,y*gridScale+pad);});g.closePath();
+  }
+  g.fillStyle='#fff';g.fill('evenodd');
+  const rgba=g.getImageData(0,0,w,h).data,ink=new Uint8Array(w*h);
+  for(let i=0;i<ink.length;i++)ink[i]=rgba[i*4+3]>127?1:0;
+  const inner=distanceTransform(ink,w,h,true),outer=distanceTransform(ink,w,h,false),sdf=new Float32Array(w*h);
+  // Subpixel edge smoothing removes staircase normals from the extracted
+  // contour while preserving the counters and the signed-distance surface.
+  const smooth=new Float32Array(w*h);
+  for(let i=0;i<sdf.length;i++){const d=Math.sqrt(inner[i])-Math.sqrt(outer[i]);sdf[i]=d-Math.sign(d)*.5;}
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x;smooth[i]=(sdf[y*w+Math.max(0,x-1)]+2*sdf[i]+sdf[y*w+Math.min(w-1,x+1)])*.25;}
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x;sdf[i]=(smooth[Math.max(0,y-1)*w+x]+2*smooth[i]+smooth[Math.min(h-1,y+1)*w+x])*.25;}
+  const candidates=[];let deepest=0;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+   const i=y*w+x;
+   if(sdf[i]<-1.5){candidates.push({x,y,d:sdf[i],near:Infinity});if(sdf[i]<sdf[deepest])deepest=i;}
+  }
+  const m=masks[which],b=m.glyphs[id],sites=b.sites.map(i=>m.sites[i]);
+  const left=Math.min(...sites.map(s=>s.localX-s.r)),right=Math.max(...sites.map(s=>s.localX+s.r));
+  const top=Math.min(...sites.map(s=>s.localY-s.r)),bottom=Math.max(...sites.map(s=>s.localY+s.r));
+  const unit=Math.min((right-left-5)/(w-2*pad),(bottom-top-5)/(h-2*pad));
+  const shape={which,id,w,h,sdf,unit,cx:(w-1)/2,cy:(h-1)/2,ox:(left+right)/2,oy:(top+bottom)/2,seeds:[],source};
+  // A balanced cover of the design is matched to existing owners. These are
+  // surface patches only, never new physical destinations or force targets.
+  let next={x:deepest%w,y:Math.floor(deepest/w)};
+  for(let n=0;n<sites.length;n++){
+   const seed={x:next.x,y:next.y,reach:0};shape.seeds.push(seed);
+   let far=-1;
+   for(const q of candidates){
+    q.near=Math.min(q.near,(q.x-seed.x)**2+(q.y-seed.y)**2);
+    const score=q.near*(1+Math.min(4,-q.d)*.08);
+    if(score>far){far=score;next=q;}
+   }
+  }
+  // The support is larger than its Voronoi cell by the local film depth.
+  // Therefore the union has the design's signed distance even inside thick
+  // strokes: there can be no internal cell seams or surviving circle rims.
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+   const d=sdf[y*w+x];if(d>3)continue;
+   let chosen=shape.seeds[0],best=Infinity;
+   for(const seed of shape.seeds){const q=(x-seed.x)**2+(y-seed.y)**2;if(q<best){best=q;chosen=seed;}}
+   chosen.reach=Math.max(chosen.reach,Math.sqrt(best)-d+2);
+  }
+  const cost=sites.map(s=>{
+   const x=shape.cx+(s.localX-shape.ox)/unit,y=shape.cy+(s.localY-shape.oy)/unit;
+   return shape.seeds.map(seed=>(seed.x-x)**2+(seed.y-y)**2);
+  });
+  const matching=assignSeeds(cost);
+  b.sites.forEach((site,i)=>{designCells[which][site]={shape,seed:shape.seeds[matching[i]]};});
+  return shape;
+ }));
+ designReady=true;
+}
+function sampleDesign(shape,x,y){
+ const {w,h,sdf}=shape,cx=clamp(x,0,w-1.001),cy=clamp(y,0,h-1.001);
+ const ix=Math.floor(cx),iy=Math.floor(cy),u=cx-ix,v=cy-iy,k=iy*w+ix;
+ const a=sdf[k]*(1-u)+sdf[k+1]*u,b=sdf[k+w]*(1-u)+sdf[k+w+1]*u;
+ return a*(1-v)+b*v+(x===cx&&y===cy?0:Math.hypot(x-cx,y-cy));
+}
+function cellPose(which,site){
+ const {shape,seed}=designCells[which][site],b=masks[which].glyphs[shape.id],sign=which?-1:1;
+ const tilt=b.tilt-b.startTilt,c=Math.cos(tilt),sn=Math.sin(tilt);
+ const x=shape.ox+(seed.x-shape.cx)*shape.unit,y=shape.oy+(seed.y-shape.cy)*shape.unit;
+ return {x:(which?W:0)+sign*(b.x+x*c-y*sn),y:(which?H:0)+sign*(b.y+x*sn+y*c),angle:tilt+(which?Math.PI:0)};
+}
+// This observer only owns visual state. No particle, spring, velocity, site,
+// release threshold, random number or preview timer is modified.
+const fusionContacts=new Map(),fusionNeighbors=new Map();
+function fusionSite(p){
+ if(p.bound>=0)return {which:p.bound,site:p.site};
+ const site=p.aimMode===mode?masks[mode].sites[p.aim]:null;
+ // Observe the wetting approach as soon as the arriving film actually meets
+ // a neighbor, including the last few frames before the original capture.
+ if(!site||p.cool>0||p.wet<=0||norm(p.x-site.x,p.y-site.y)>p.r+1.1)return null;
+ return {which:mode,site:p.aim};
+}
+function observeFusionContacts(){
+ fusionNeighbors.clear();
+ const sites=particles.map(fusionSite);
+ for(const p of particles){
+  const ps=sites[p.id];if(!ps)continue;
+  const m=masks[ps.which];
+  for(const site of m.sites[ps.site].links){
+   const target=m.sites[site],id=target.owner>=0?target.owner:target.claim;if(id<=p.id)continue;
+   const qs=sites[id];if(!qs||qs.which!==ps.which||qs.site!==site)continue;
+   const q=particles[id],gap=norm(q.x-p.x,q.y-p.y)-p.r-q.r,key=p.id*particles.length+q.id;
+   let contact=fusionContacts.get(key);
+   if(contact&&(contact.which!==ps.which||contact.aSite!==ps.site||contact.bSite!==qs.site)){fusionContacts.delete(key);contact=null;}
+   // A fraction of a screen pixel allows antialiased rims to meet; the old
+   // two-unit proximity test could start a fusion before the films touched.
+   if(!contact&&gap<=.18){contact={a:p.id,b:q.id,which:ps.which,aSite:ps.site,bSite:qs.site,age:0,started:time};fusionContacts.set(key,contact);}
+   if(!contact)continue;
+   if(gap<=.65)contact.age=Math.min(1.5,contact.age+DT);
+   else if(contact.age<1.4)contact.age=Math.max(0,contact.age-DT*2);
+   if(gap>.65&&contact.age===0){fusionContacts.delete(key);continue;}
+   contact.seen=time;
+   for(const owner of [p.id,q.id]){
+    if(!fusionNeighbors.has(owner))fusionNeighbors.set(owner,[]);
+    fusionNeighbors.get(owner).push(contact);
+   }
+  }
+ }
+ for(const [key,contact] of fusionContacts)if(contact.seen!==time)fusionContacts.delete(key);
+}
+function updateMembraneMorph(){
+ if(!designReady)return;
+ observeFusionContacts();
+ for(const p of particles){
+  let v=membraneStates.get(p.id);
+  if(!v){v={amount:0,age:0,which:-1,site:-1,attached:false,dx:0,dy:0,angle:0,flightX:0,flightY:0,budX:0,budY:0,freeAge:1,freeAmount:0};membraneStates.set(p.id,v);}
+  if(p.bound>=0){
+   // A rapid reversal can recapture an owner before its old patch rounds
+   // off. Finish that local rounding before adopting the new surface cell.
+   if(v.amount>0&&(v.which!==p.bound||v.site!==p.site)){
+    releaseFilm(p,v);roundFlyingFilm(p,v);v.age=0;continue;
+   }
+   if(!v.attached||v.which!==p.bound||v.site!==p.site){v.age=0;v.which=p.bound;v.site=p.site;}
+   const contacts=fusionNeighbors.get(p.id)||[];
+   v.age=contacts.reduce((age,c)=>Math.max(age,c.age),v.age);
+   // Spend the first .22 seconds compressing the two separate films. Keep
+   // the original 1.41-second settling window, with growth led by each touch.
+   // Keep a little stretched film at the physical release point so it can
+   // recoil in flight instead of finishing its round shape while anchored.
+   const goal=morphEase((v.age-.22)/1.19)*(1-.75*morphEase((p.peel-.24)/.56));
+   v.amount+=clamp(goal-v.amount,-DT*3.8,DT*.95);
+   const pose=cellPose(p.bound,p.site);v.dx=pose.x-p.x;v.dy=pose.y-p.y;v.angle=pose.angle;v.attached=true;
+   // A local surface bud stretches with buoyancy while its physical owner
+   // remains attached. The original peel clock and release force are intact.
+   if(p.peel<=.12)v.peelReach=null;
+   else if(v.peelReach==null)v.peelReach=peelingLift(p,v,pose);
+   // Keep outward motion at pinch-off: easing this pull to a stop made the
+   // new bubble appear to wait before buoyancy accelerated it again.
+   const pull=clamp((p.peel-.12)/.68,0,1),lift=(v.peelReach||0)*pull*pull;
+   v.budX=bx*lift;v.budY=by*lift;
+   v.peelShape=morphEase((p.peel-.12)/.68);v.peelBX=bx;v.peelBY=by;
+   if(v.amount===1){v.flightX=0;v.flightY=0;}
+  }else{
+   releaseFilm(p,v);roundFlyingFilm(p,v);v.age=0;
+  }
+ }
+ // Record the actual displayed center after all observers have updated.
+ // This includes local stretching and wall limits, not just body velocity.
+ for(const p of particles){
+  const v=membraneStates.get(p.id);
+  if(v.attached&&p.peel>.12){
+   const target=fusionCenter(p,true),follow=1-Math.exp(-DT*22);
+   v.peelCenterX??=v.visualX??target.x;v.peelCenterY??=v.visualY??target.y;
+   v.peelCenterX+=(target.x-v.peelCenterX)*follow;
+   v.peelCenterY+=(target.y-v.peelCenterY)*follow;
+  }else{v.peelCenterX=undefined;v.peelCenterY=undefined;}
+  const c=fusionCenter(p);
+  v.visualVX=v.visualX===undefined?p.vx:(c.x-v.visualX)/DT;
+  v.visualVY=v.visualY===undefined?p.vy:(c.y-v.visualY)/DT;
+  v.visualX=c.x;v.visualY=c.y;
+  v.screenX=p.x+(p.depth-.5)*viewX;
+  v.screenY=p.y+(p.depth-.5)*viewY;
+ }
+}
+function peelingLift(p,v,pose){
+ if(p.peel<=.12)return 0;
+ const {shape,seed}=designCells[v.which][v.site],f=morphEase(v.amount),c=Math.cos(pose.angle),sn=Math.sin(pose.angle);
+ const px=clamp(p.x+(p.depth-.5)*viewX+v.flightX,p.r,W-p.r),py=clamp(p.y+(p.depth-.5)*viewY+v.flightY,p.r,H-p.r);
+ const cx=px+(pose.x-px)*f,cy=py+(pose.y-py)*f;
+ let distance=0;
+ // Find the exposed film in the buoyancy direction. An interior seed must
+ // grow to that surface before its bud can be visible outside a thick stroke.
+ for(let i=0;i<8;i++){
+  const dx=cx+bx*distance-pose.x,dy=cy+by*distance-pose.y;
+  const d=sampleDesign(shape,seed.x+(dx*c+dy*sn)/shape.unit,seed.y+(-dx*sn+dy*c)/shape.unit)*shape.unit;
+  if(d>=0)break;
+  distance+=Math.max(.4,-d);if(distance>=14){distance=14;break;}
+ }
+ return distance+p.r*.55;
+}
+function releaseFilm(p,v){
+ if(!v.attached)return;
+ const px=p.x+(p.depth-.5)*viewX,py=p.y+(p.depth-.5)*viewY;
+ // Continue the last visible position and velocity through pinch-off. The
+ // small residual stretch velocity relaxes while the original buoyancy acts.
+ const vx=v.visualVX??p.vx,vy=v.visualVY??p.vy;
+ v.flightX=clamp((v.visualX??px)+vx*DT,p.r,W-p.r)-px;
+ v.flightY=clamp((v.visualY??py)+vy*DT,p.r,H-p.r)-py;
+ v.flightVX=vx-(v.screenX===undefined?p.vx:(px-v.screenX)/DT);
+ v.flightVY=vy-(v.screenY===undefined?p.vy:(py-v.screenY)/DT);
+ v.justReleased=true;
+ v.freePeeling=v.peelShape||0;v.freeBX=v.peelBX??bx;v.freeBY=v.peelBY??by;
+ v.budX=0;v.budY=0;
+ v.freeAmount=v.amount;v.freeAge=0;v.attached=false;
+}
+function roundFlyingFilm(p,v){
+ if(v.justReleased)v.justReleased=false;
+ else if(v.flightVX||v.flightVY){
+  const damping=Math.exp(-DT*12),travel=(1-damping)/12;
+  v.flightX+=(v.flightVX||0)*travel;v.flightY+=(v.flightVY||0)*travel;
+  v.flightVX*=damping;v.flightVY*=damping;
+  if(Math.abs(v.flightVX)+Math.abs(v.flightVY)<.01)v.flightVX=v.flightVY=0;
+ }
+ v.freeAge+=DT;
+ const duration=.28+p.r*.012;
+ v.amount=v.freeAmount*(1-morphEase(v.freeAge/duration));
+}
+function flightRecoil(p,v){
+ if(!v||v.attached||v.freeAge>=.48||!v.freeAmount)return 1;
+ const t=v.freeAge/.48;
+ return 1+.075*Math.sin(t*TAU)*Math.exp(-t*3)*(1-morphEase((t-.75)/.25));
+}
+function fusionCenter(p,raw=false){
+ const v=membraneStates.get(p.id),f=v?morphEase(v.amount):0;
+ if(!raw&&v?.attached&&p.peel>.12&&v.peelCenterX!==undefined)return {x:v.peelCenterX,y:v.peelCenterY};
+ const px=clamp(p.x+(p.depth-.5)*viewX+(v?.flightX||0),p.r,W-p.r),py=clamp(p.y+(p.depth-.5)*viewY+(v?.flightY||0),p.r,H-p.r);
+ if(!f||!v.attached)return {x:px,y:py};
+ const target=cellPose(v.which,v.site);
+ let x=px+(target.x-px)*f+v.budX,y=py+(target.y-py)*f+v.budY;
+ const wallBlend=morphEase((p.peel-.12)/.68);
+ x+=(clamp(x,p.r,W-p.r)-x)*wallBlend;y+=(clamp(y,p.r,H-p.r)-y)*wallBlend;
+ return {x,y};
+}
+function fusionSurface(p,cx,cy){
+ const contacts=[];
+ for(const contact of fusionNeighbors.get(p.id)||[]){
+  if(contact.age>=1.4)continue;
+  const q=particles[contact.a===p.id?contact.b:contact.a],center=fusionCenter(q);
+  const dx=center.x-cx,dy=center.y-cy,d=Math.sqrt(dx*dx+dy*dy)||1;
+  const approach=morphEase((p.r+q.r-d)/(Math.min(p.r,q.r)*.65));
+  const age=contact.age,widen=morphEase((age-.22)/.62)*(.65+.35*approach),live=1-morphEase((p.peel||0)/.5);
+  const load=morphEase(age/.13)*(1-morphEase((age-.30)/.65))*live;
+  const plane=Math.max(p.r*.68,Math.min(p.r,d*p.r/(p.r+q.r)-.36*(1-widen)));
+  const ring=age>.7?Math.sin((age-.7)*17)*Math.exp(-(age-.7)*6)*morphEase((age-.7)/.10)*(1-morphEase((age-1.1)/.3)):0;
+  contacts.push({nx:dx/d,ny:dy/d,plane:p.r+(plane-p.r)*load,bulge:p.r*.045*load,widen,lead:1-morphEase((age-.85)/.55),rebound:p.r*.055*ring*live,age});
+ }
+ return contacts;
+}
+function contactFilmDistance(d,dx,dy,r,contacts){
+ for(const c of contacts){
+  const along=dx*c.nx+dy*c.ny,across=-dx*c.ny+dy*c.nx;
+  const front=morphEase((along/r+.02)/.65);
+  const shoulder=front*Math.max(0,1-Math.abs(along/r-.25))*Math.min(1,across*across/(r*r*.5));
+  d-=c.bulge*shoulder+c.rebound*front*Math.max(0,1-Math.abs(along/r-.3))*(across/r);
+  // The flattened faces remain separate until the local neck grows through
+  // them. Pressure and the small surface recoil vanish before final settling.
+  d=Math.max(d,along-c.plane-c.widen*r*.6);
+ }
+ return d;
+}
+const membraneCanvas=document.createElement('canvas'),membraneCtx=membraneCanvas.getContext('2d');
+let membraneField,membranePixels,membraneW=0,membraneH=0;
+const filmColors=Array.from({length:256},(_,i)=>[.5+.5*Math.cos(i*TAU/256),.5+.5*Math.cos(i*TAU/256-2.1),.5+.5*Math.cos(i*TAU/256+2.1)]);
+const filmProfile=Array.from({length:1024},(_,i)=>{const d=i/32;return [Math.exp(-d*d/.3),Math.exp(-d/2.5),Math.exp(-(((d-1.6)/.85)**2))];});
+const roundFilmContours=new WeakMap();
+function roundFilmContour(p){
+ let cached=roundFilmContours.get(p);
+ if(cached&&cached.aspect===p.aspect&&p.squash.every((v,i)=>v===cached.squash[i]))return cached.radii;
+ // Sample the existing quadratic outline; material changes must not replace
+ // its compressed contact faces or the original circular silhouette.
+ const points=outline(p,time),n=points.length,edge=[];
+ for(let i=0;i<n;i++){
+  const a=points[(i+n-1)%n],b=points[i],c=points[(i+1)%n];
+  for(let j=0;j<4;j++){
+   const t=j/4,u=1-t,x=u*u*(a.x+b.x)*.5+2*u*t*b.x+t*t*(b.x+c.x)*.5;
+   const y=u*u*(a.y+b.y)*.5+2*u*t*b.y+t*t*(b.y+c.y)*.5;
+   edge.push({angle:Math.atan2(y,x),radius:Math.sqrt(x*x+y*y)*p.r});
+  }
+ }
+ edge.sort((a,b)=>a.angle-b.angle);
+ edge.unshift({...edge[edge.length-1],angle:edge[edge.length-1].angle-TAU});
+ edge.push({...edge[1],angle:edge[1].angle+TAU});
+ const radii=new Float32Array(257);let j=0;
+ for(let i=0;i<=256;i++){
+  const angle=-Math.PI+i*TAU/256;
+  while(j<edge.length-2&&edge[j+1].angle<angle)j++;
+  const a=edge[j],b=edge[j+1],t=(angle-a.angle)/(b.angle-a.angle);
+  radii[i]=a.radius+(b.radius-a.radius)*t;
+ }
+ roundFilmContours.set(p,{aspect:p.aspect,squash:Array.from(p.squash),radii});return radii;
+}
+function drawMembranes(){
+ if(!designReady)return;
+ const resolution=1.25,fw=Math.ceil(W*resolution),fh=Math.ceil(H*resolution);
+ if(fw!==membraneW||fh!==membraneH){
+  membraneW=fw;membraneH=fh;membraneCanvas.width=fw;membraneCanvas.height=fh;
+  membraneField=new Float32Array(fw*fh);membranePixels=membraneCtx.createImageData(fw,fh);
+ }
+ const field=membraneField,pixels=membranePixels.data,cols=Math.ceil(fw/16),tiles=new Set();
+ field.fill(1000);pixels.fill(0);
+ let activeLeft=fw,activeTop=fh,activeRight=0,activeBottom=0;
+ const touchRect=(x0,y0,x1,y1)=>{
+  activeLeft=Math.min(activeLeft,x0);activeTop=Math.min(activeTop,y0);activeRight=Math.max(activeRight,x1);activeBottom=Math.max(activeBottom,y1);
+  for(let ty=y0>>4;ty<=(y1>>4);ty++)for(let tx=x0>>4;tx<=(x1>>4);tx++)tiles.add(ty*cols+tx);
+ };
+ const glyphGroups=Array.from({length:12},()=>[]),groups=[];
+ for(const p of drawOrder){
+  const v=p.micro?null:membraneStates.get(p.id);
+  if(v?.amount>0&&v.attached)glyphGroups[v.which*6+masks[v.which].sites[v.site].glyph].push(p);
+  else groups.push([p]);
+ }
+ groups.push(...glyphGroups);
+ for(const group of groups){
+  if(!group.length)continue;
+  activeLeft=fw;activeTop=fh;activeRight=0;activeBottom=0;
+  const first=group[0].micro?null:membraneStates.get(group[0].id);
+  const round=!(first?.amount>0),strength=group[0].micro?.42:1;
+  if(round){
+   const p=group[0],radii=roundFilmContour(p),pad=p.r*Math.max(p.aspect,1/p.aspect)+2;
+   const center=p.micro?{x:clamp(p.x+(p.depth-.5)*viewX,p.r,W-p.r),y:clamp(p.y+(p.depth-.5)*viewY,p.r,H-p.r)}:fusionCenter(p);
+   const cx=center.x,cy=center.y,recoil=flightRecoil(p,first);
+   const contacts=p.micro?[]:fusionSurface(p,cx,cy);
+   const x0=clamp(Math.floor((cx-pad)*resolution),1,fw-2),x1=clamp(Math.ceil((cx+pad)*resolution),1,fw-2);
+   const y0=clamp(Math.floor((cy-pad)*resolution),1,fh-2),y1=clamp(Math.ceil((cy+pad)*resolution),1,fh-2);
+   touchRect(x0,y0,x1,y1);
+   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
+    const dx=((x+.5)/resolution-cx)/recoil,dy=((y+.5)/resolution-cy)*recoil;
+    const angle=(Math.atan2(dy,dx)+Math.PI)*256/TAU,i=Math.min(255,Math.floor(angle)),u=angle-i;
+    const d=Math.sqrt(dx*dx+dy*dy)-(radii[i]*(1-u)+radii[i+1]*u);
+    field[y*fw+x]=contacts.length?contactFilmDistance(d,dx,dy,p.r,contacts):d;
+   }
+  }else{
+  const whole=designCells[first.which][first.site].shape;
+  const complete=group.length===whole.seeds.length&&group.every(p=>{const v=membraneStates.get(p.id);return v.attached&&v.amount===1;});
+  if(complete){
+   // At full fusion the patch union is exactly this distance field (the
+   // support-cover invariant above). Evaluate it once per pixel, with the
+   // same surface and material, instead of repeating it for every owner.
+   const pose=cellPose(first.which,first.site),seed=designCells[first.which][first.site].seed;
+   const c=Math.cos(pose.angle),sn=Math.sin(pose.angle),ox=(seed.x-whole.cx)*whole.unit,oy=(seed.y-whole.cy)*whole.unit;
+   const cx=pose.x-ox*c+oy*sn,cy=pose.y-ox*sn-oy*c;
+   const rx=(Math.abs(c)*whole.w+Math.abs(sn)*whole.h)*whole.unit/2+2,ry=(Math.abs(sn)*whole.w+Math.abs(c)*whole.h)*whole.unit/2+2;
+   const x0=clamp(Math.floor((cx-rx)*resolution),1,fw-2),x1=clamp(Math.ceil((cx+rx)*resolution),1,fw-2);
+   const y0=clamp(Math.floor((cy-ry)*resolution),1,fh-2),y1=clamp(Math.ceil((cy+ry)*resolution),1,fh-2);
+   touchRect(x0,y0,x1,y1);
+   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
+    const px=(x+.5)/resolution,py=(y+.5)/resolution,dx=px-cx,dy=py-cy;
+    const d=sampleDesign(whole,whole.cx+(dx*c+dy*sn)/whole.unit,whole.cy+(-dx*sn+dy*c)/whole.unit)*whole.unit;
+    field[y*fw+x]=Math.max(d,.55-px,px-W+.55,.55-py,py-H+.55);
+   }
+  }else{
+   // Fully fused owners share one glyph distance field. Union their round
+   // supports first, then intersect once with the glyph; the result is
+   // identical to unioning every clipped patch, including during peeling.
+   const mature=group.filter(p=>{const v=membraneStates.get(p.id);return v.attached&&v.amount===1;});
+   if(mature.length){
+    for(const p of mature){
+     const v=membraneStates.get(p.id),cell=designCells[v.which][v.site],pose=cellPose(v.which,v.site),reach=cell.seed.reach*whole.unit;
+     const x0=clamp(Math.floor((pose.x-reach-2)*resolution),1,fw-2),x1=clamp(Math.ceil((pose.x+reach+2)*resolution),1,fw-2);
+     const y0=clamp(Math.floor((pose.y-reach-2)*resolution),1,fh-2),y1=clamp(Math.ceil((pose.y+reach+2)*resolution),1,fh-2);
+     touchRect(x0,y0,x1,y1);
+     for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
+      const dx=(x+.5)/resolution-pose.x,dy=(y+.5)/resolution-pose.y,k=y*fw+x;
+      field[k]=Math.min(field[k],Math.sqrt(dx*dx+dy*dy)-reach);
+     }
+    }
+    const v=membraneStates.get(mature[0].id),pose=cellPose(v.which,v.site),seed=designCells[v.which][v.site].seed;
+    const c=Math.cos(pose.angle),sn=Math.sin(pose.angle),ox=(seed.x-whole.cx)*whole.unit,oy=(seed.y-whole.cy)*whole.unit;
+    const cx=pose.x-ox*c+oy*sn,cy=pose.y-ox*sn-oy*c;
+    for(const tile of tiles){
+     const left=(tile%cols)*16,top=Math.floor(tile/cols)*16;
+     for(let y=Math.max(1,top,activeTop);y<Math.min(fh-1,top+16,activeBottom+1);y++)for(let x=Math.max(1,left,activeLeft);x<Math.min(fw-1,left+16,activeRight+1);x++){
+      const k=y*fw+x;if(field[k]>2)continue;
+      const px=(x+.5)/resolution,py=(y+.5)/resolution,dx=px-cx,dy=py-cy;
+      const d=sampleDesign(whole,whole.cx+(dx*c+dy*sn)/whole.unit,whole.cy+(-dx*sn+dy*c)/whole.unit)*whole.unit;
+      field[k]=Math.max(field[k],d,.55-px,px-W+.55,.55-py,py-H+.55);
+     }
+    }
+   }
+   for(const p of group){
+   const v=membraneStates.get(p.id),f=morphEase(v.amount),{shape,seed}=designCells[v.which][v.site];
+   if(v.attached&&v.amount===1)continue;
+   const center=fusionCenter(p),target=v.attached?cellPose(v.which,v.site):{angle:v.angle};
+   const cx=center.x,cy=center.y,c=Math.cos(target.angle),sn=Math.sin(target.angle),recoil=flightRecoil(p,v);
+   // Carry the outward-facing bud profile through the first free frame;
+   // switching back to an unstrained patch here would pop its outline.
+   const peeling=v.attached?morphEase((p.peel-.12)/.68):(v.freePeeling||0)*(v.freeAmount?v.amount/v.freeAmount:0);
+   const peelBX=v.attached?bx:(v.freeBX??bx),peelBY=v.attached?by:(v.freeBY??by);
+   const contacts=fusionSurface(p,cx,cy);
+   const reach=seed.reach*shape.unit,pad=p.r+(reach-p.r)*f+2;
+   const x0=clamp(Math.floor((cx-pad)*resolution),1,fw-2),x1=clamp(Math.ceil((cx+pad)*resolution),1,fw-2);
+   const y0=clamp(Math.floor((cy-pad)*resolution),1,fh-2),y1=clamp(Math.ceil((cy+pad)*resolution),1,fh-2);
+   touchRect(x0,y0,x1,y1);
+   const dents=f<.999?faceNormals.flatMap((n,i)=>p.squash[i]>.001?[{x:n.x,y:n.y,plane:p.r*(1-p.squash[i])}]:[]):[];
+   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
+    const dx=(x+.5)/resolution-cx,dy=(y+.5)/resolution-cy,radius=Math.sqrt(dx*dx+dy*dy);
+    let circle=f===1?0:Math.sqrt((dx/(p.aspect*recoil))**2+(dy*p.aspect*recoil)**2)-p.r;
+    for(const n of dents)circle=Math.max(circle,dx*n.x+dy*n.y-n.plane);
+    if(contacts.length)circle=contactFilmDistance(circle,dx,dy,p.r,contacts);
+    const sx=seed.x+(dx*c+dy*sn)/shape.unit,sy=seed.y+(-dx*sn+dy*c)/shape.unit;
+    const destination=Math.max(sampleDesign(shape,sx,sy)*shape.unit,radius-reach);
+    // The zero contour itself moves continuously from a compressed sphere
+    // into a piece of the design. This is a distance interpolation, not an
+    // alpha interpolation or a mask revealing an image.
+    let front=0,neck=v.attached&&p.peel<.001&&v.age<1.4?0:(1-f)*.7;
+    for(const contact of contacts){
+     const along=dx*contact.nx+dy*contact.ny,across=-dx*contact.ny+dy*contact.nx;
+     front+=(clamp((along/p.r+1)*.5,0,1)*contact.widen*2-1)*contact.lead;
+     const local=Math.max(0,1-Math.abs(along-contact.plane)/(p.r*.8))*Math.max(0,1-Math.abs(across)/(p.r*.75));
+     neck=Math.max(neck,local*contact.widen*contact.lead*(1-f)*.7);
+    }
+    let localF=contacts.length?clamp(f+front/contacts.length*.24*4*f*(1-f),0,1):f;
+    if(peeling){
+     // The buoyant face rounds into a small bud before the rooted face does.
+     const outward=clamp((dx*peelBX+dy*peelBY)/p.r*.5+.5,0,1);
+     localF=Math.max(0,localF-.45*(1-f)*outward*peeling);
+    }
+    let d=circle+(destination-circle)*localF;
+    if(!v.attached&&v.freeAmount>0)d=Math.min(d,circle);
+    d=Math.max(d,.55-(x+.5)/resolution,(x+.5)/resolution-W+.55,.55-(y+.5)/resolution,(y+.5)/resolution-H+.55);
+    const k=y*fw+x,h=neck>0?Math.max(neck-Math.abs(field[k]-d),0)/neck:0;
+    field[k]=Math.min(field[k],d)-h*h*neck*.25;
+   }
+   }
+  }
+  // Each short neck belongs to a recorded contact, not to the whole glyph.
+  // Its zero contour widens geometrically; no extra highlight or alpha layer
+  // is drawn, so the existing thin-film shader follows the connected surface.
+  for(const contact of first.attached?fusionContacts.values():[]){
+   if(contact.age<=.22||contact.age>=1.4||contact.which!==first.which)continue;
+   const a=particles[contact.a],b=particles[contact.b];
+   if(a.bound!==contact.which||b.bound!==contact.which||masks[contact.which].sites[contact.aSite].glyph!==whole.id)continue;
+   const av=membraneStates.get(a.id),bv=membraneStates.get(b.id);
+   if(!av?.amount||!bv?.amount)continue;
+   const pa=fusionCenter(a),pb=fusionCenter(b),dx=pb.x-pa.x,dy=pb.y-pa.y,length=Math.sqrt(dx*dx+dy*dy);
+   if(length<.01||length>(a.r+b.r)*1.6)continue;
+   const approach=morphEase((a.r+b.r-length)/(Math.min(a.r,b.r)*.65));
+   const widen=morphEase((contact.age-.22)/.62)*(.65+.35*approach),life=1-morphEase((contact.age-.84)/.56);
+   const radius=Math.min(a.r,b.r)*.48*widen*life*(1-morphEase(Math.max(a.peel,b.peel)/.5));
+   if(radius<.01)continue;
+   const nx=dx/length,ny=dy/length,t=a.r/(a.r+b.r),cx=pa.x+dx*t,cy=pa.y+dy*t,half=.65*life,pad=radius+half+2;
+   const x0=clamp(Math.floor((cx-pad)*resolution),1,fw-2),x1=clamp(Math.ceil((cx+pad)*resolution),1,fw-2);
+   const y0=clamp(Math.floor((cy-pad)*resolution),1,fh-2),y1=clamp(Math.ceil((cy+pad)*resolution),1,fh-2);
+   touchRect(x0,y0,x1,y1);
+   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
+    const rx=(x+.5)/resolution-cx,ry=(y+.5)/resolution-cy,axis=Math.abs(rx*nx+ry*ny),along=Math.max(0,axis-half),across=-rx*ny+ry*nx;
+    const elasticRadius=radius*(.55+.45*Math.min(1,axis/(half+.001))**2);
+    const d=Math.max(Math.sqrt(along*along+across*across)-elasticRadius,.55-(x+.5)/resolution,(x+.5)/resolution-W+.55,.55-(y+.5)/resolution,(y+.5)/resolution-H+.55),k=y*fw+x,neck=Math.min(.7,radius*.4),h=Math.max(neck-Math.abs(field[k]-d),0)/neck;
+    field[k]=Math.min(field[k],d)-h*h*neck*.25;
+   }
+  }
+  // A peeling bud keeps a tapered neck to a less-strained neighbor. Each
+  // neck follows its owner's existing peel value and ends at that owner's
+  // release; earlier free bubbles are already rendered independently.
+  if(first.attached)for(const p of group){
+   if(p.bound!==first.which||p.peel<=.12||p.peel>=.80)continue;
+   const tip=fusionCenter(p),grown=p.r*morphEase((p.peel-.36)/.44),opening=morphEase((p.peel-.50)/.30);
+   const ringPad=p.r+3;
+   const bx0=clamp(Math.floor((tip.x-ringPad)*resolution),1,fw-2),bx1=clamp(Math.ceil((tip.x+ringPad)*resolution),1,fw-2);
+   const by0=clamp(Math.floor((tip.y-ringPad)*resolution),1,fh-2),by1=clamp(Math.ceil((tip.y+ringPad)*resolution),1,fh-2);
+   touchRect(bx0,by0,bx1,by1);
+   for(let y=by0;y<=by1;y++)for(let x=bx0;x<=bx1;x++){
+    const px=(x+.5)/resolution,py=(y+.5)/resolution,dx=px-tip.x,dy=py-tip.y,radial=Math.sqrt(dx*dx+dy*dy),k=y*fw+x;
+    // Recede overlapping stroke patches around the growing bud. This local
+    // collar exposes its outline; the neck below keeps it connected until
+    // its own release. All changes are distances, never transparency fades.
+    const collar=Math.min(radial-p.r*.96,p.r+1-radial)-(1-opening)*(p.r+2);
+    field[k]=Math.max(field[k],collar);
+    const sphere=Math.max(radial-grown,.55-px,px-W+.55,.55-py,py-H+.55);
+    field[k]=Math.min(field[k],sphere);
+   }
+   const m=masks[p.bound];let q=null;
+   for(const site of m.sites[p.site].links){
+    const id=m.sites[site].owner;if(id<0)continue;
+    const candidate=particles[id];
+    if(candidate.peel<p.peel-.02&&(!q||candidate.peel<q.peel))q=candidate;
+   }
+   if(!q)continue;
+   const neighbor=fusionCenter(q),rx=tip.x-neighbor.x,ry=tip.y-neighbor.y,span=Math.sqrt(rx*rx+ry*ry);
+   if(span<.1)continue;
+   // Only the short exposed collar is stretched. Never draw a long thread
+   // all the way back to the neighboring bubble's center.
+   const collar=Math.min(1.6,Math.max(.8,p.r*.22)),length=Math.min(span,grown+collar);
+   const root={x:tip.x-rx/span*length,y:tip.y-ry/span*length},dx=tip.x-root.x,dy=tip.y-root.y;
+   const t=morphEase((p.peel-.56)/.24),grow=morphEase((p.peel-.36)/.20),small=Math.min(p.r,q.r),waist=small*.22*(1-t),end=small*.32;
+   const nx=dx/length,ny=dy/length,pad=end+2;
+   const x0=clamp(Math.floor((Math.min(root.x,tip.x)-pad)*resolution),1,fw-2),x1=clamp(Math.ceil((Math.max(root.x,tip.x)+pad)*resolution),1,fw-2);
+   const y0=clamp(Math.floor((Math.min(root.y,tip.y)-pad)*resolution),1,fh-2),y1=clamp(Math.ceil((Math.max(root.y,tip.y)+pad)*resolution),1,fh-2);
+   touchRect(x0,y0,x1,y1);
+   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
+    const px=(x+.5)/resolution,py=(y+.5)/resolution,rx=px-root.x,ry=py-root.y,axis=rx*nx+ry*ny,u=clamp(axis/length,0,1);
+    // Broad at either film, thin in the middle: the waist reaches zero at
+    // pinch-off, so separation changes topology without an opacity fade.
+    const radius=(waist+(end-waist)*(2*u-1)**2)*grow-.5*(1-grow);
+    const along=axis-clamp(axis,0,length),across=-rx*ny+ry*nx;
+    const d=Math.max(Math.sqrt(along*along+across*across)-radius,.55-px,px-W+.55,.55-py,py-H+.55);
+    const k=y*fw+x,neck=.35*(1-t),h=neck>0?Math.max(neck-Math.abs(field[k]-d),0)/neck:0;
+    field[k]=Math.min(field[k],d)-h*h*neck*.25;
+   }
+  }
+  }
+  // One material for free spheres, stretched contacts and complete glyphs.
+  // Phase is continuous in world space, surface normal and simulation time;
+  // attachment, particle IDs and phrase changes never choose a new color.
+  for(const tile of tiles){
+   const left=(tile%cols)*16,top=Math.floor(tile/cols)*16;
+   for(let y=Math.max(1,top,activeTop);y<Math.min(fh-1,top+16,activeBottom+1);y++)for(let x=Math.max(1,left,activeLeft);x<Math.min(fw-1,left+16,activeRight+1);x++){
+    const k=y*fw+x,d=field[k],coverage=clamp(.5-d*resolution,0,1);if(!coverage)continue;
+    let nx=field[k+1]-field[k-1],ny=field[k+fw]-field[k-fw];const length=Math.sqrt(nx*nx+ny*ny)||1;nx/=length;ny/=length;
+    const depth=Math.max(0,-d),light=clamp(-nx*.65-ny*.76,0,1),back=clamp(nx*.5+ny*.86,0,1);
+    const [rim,bevel,band]=filmProfile[Math.min(1023,Math.round(depth*32))];
+    const light3=light*light*light,back2=back*back;
+    const white=.016+bevel*.16+rim*(.48+1.5*light3+.55*back2*back2*back)+band*light3*light3*.43;
+    const phase=Math.atan2(ny,nx)*256/TAU+x/resolution*.11+y/resolution*.065+depth*11+time*5;
+    const index=Math.floor(phase),mix=phase-index,a=filmColors[index&255],b=filmColors[(index+1)&255];
+    const tint=(band*.23+bevel*.075)*(.3+light*.7);
+    const red=clamp((white+tint*(a[0]+(b[0]-a[0])*mix))*strength,0,1);
+    const green=clamp((white*1.02+tint*(a[1]+(b[1]-a[1])*mix))*strength,0,1);
+    const blue=clamp((white*1.045+tint*(a[2]+(b[2]-a[2])*mix))*strength,0,1);
+    // Spatial film opacity leaves the interior transparent to rear bubbles.
+    // It is never an animation fade or a material crossfade.
+    const opacity=coverage*Math.max(red,green,blue),at=k*4,previous=pixels[at+3]/255,alpha=opacity+previous*(1-opacity);
+    if(!alpha)continue;
+    const front=coverage*255/alpha,rear=previous*(1-opacity)/alpha;
+    pixels[at]=red*front+pixels[at]*rear;
+    pixels[at+1]=green*front+pixels[at+1]*rear;
+    pixels[at+2]=blue*front+pixels[at+2]*rear;
+    pixels[at+3]=Math.round(alpha*255);
+   }
+  }
+  for(const tile of tiles){
+   const left=(tile%cols)*16,top=Math.floor(tile/cols)*16;
+   for(let y=top;y<Math.min(fh,top+16);y++)field.fill(1000,y*fw+left,y*fw+Math.min(fw,left+16));
+  }
+  tiles.clear();
+ }
+ membraneCtx.putImageData(membranePixels,0,0);ctx.globalAlpha=1;ctx.drawImage(membraneCanvas,0,0,W,H);
+}
+
+function draw(){
+ ctx.setTransform(canvas.width/W,0,0,canvas.height/H,0,0);ctx.clearRect(0,0,W,H);
+ drawMembranes();
+}
+function ui(){
+ const ax=Math.abs(bx),ay=Math.abs(by),vertical=by<0?'上':'下',horizontal=bx<0?'左':'右';
+ $('direction').textContent=norm(bx,by)<.08?'輕輕漂浮':'向'+(Math.min(ax,ay)>Math.max(ax,ay)*.3?horizontal+vertical:ax>ay?horizontal:vertical)+'浮';
+ $('angle').textContent=Math.round(angle)+'°';if(source==='sensor')$('tilt').value=Math.round(angle);
+}
+function frame(now){
+ if(!last)last=now;const elapsed=Math.min(.05,(now-last)/1000);last=now;
+ if(running&&!document.hidden){const start=performance.now();accumulator+=elapsed;let n=0;while(accumulator>=DT&&n++<6){updatePreview(DT);physics();accumulator-=DT;}draw();ui();frameMs=frameMs*.9+(performance.now()-start)*.1;}
+ requestAnimationFrame(frame);
+}
+function resize(){
+ const rect=canvas.getBoundingClientRect();if(!rect.width||!rect.height)return;
+ // Keep the short dimension at 360 world units so the same lettering fits
+ // portrait and landscape. Collision bounds always match the actual canvas.
+ const newW=Math.max(360,Math.round(360*rect.width/rect.height)),newH=newW*rect.height/rect.width;
+ dpr=Math.min(devicePixelRatio||1,2);
+ const pixelsW=Math.round(rect.width*dpr),pixelsH=Math.round(rect.height*dpr);
+ if(canvas.width!==pixelsW)canvas.width=pixelsW;if(canvas.height!==pixelsH)canvas.height=pixelsH;
+ if(!ready){W=newW;H=newH;initialize();}
+ else if(newW!==W||Math.abs(newH-H)>.5){
+  const oldW=W,oldH=H,shift=(newW-W)/2;W=newW;H=newH;configureSpace();
+  // A browser toolbar or viewport resize is not a phrase change. Preserve
+  // every owner, spring and velocity instead of releasing the complete text.
+  for(const m of masks){
+   for(const b of m.glyphs){b.x+=shift;b.startX+=shift;glyphPoints(m,b);glyphWalls(b);}
+   placeGlyphs(m);
+  }
+  for(const p of particles){
+   if(p.bound>=0){const site=masks[p.bound].sites[p.site];p.x+=site.x-p.anchorX;p.y+=site.y-p.anchorY;p.anchorX=site.x;p.anchorY=site.y;}
+   else{p.x*=W/oldW;p.y*=H/oldH;}
+   walls(p);
+  }
+  for(const p of microBubbles){p.x*=W/oldW;p.y*=H/oldH;walls(p);}
+ }
+ draw();
+}
+// Preview is an input controller only: it turns the existing gravity vector.
+// It never resets, teleports or changes the lettering or its bubble pool.
+function stopPreview(){
+ if(!previewPlayback.active)return;
+ previewPlayback.active=false;if(source==='preview')source='manual';
+ $('preview').textContent='播放預覽';$('preview').setAttribute('aria-pressed','false');
+ $('hint').textContent='預覽已暫停，泡泡會從當下的位置繼續飄動。';
+}
+function previewTurn(target){
+ Object.assign(previewPlayback,{phase:'turning',from:previewPlayback.angle,target,elapsed:0,duration:Math.max(1.2,Math.abs(target-previewPlayback.angle)/30),readTime:0});
+}
+function updatePreview(dt){
+ const p=previewPlayback;if(!p.active)return;
+ if(p.phase==='settling'){
+  p.readTime=masks[mode].bound===masks[mode].sites.length?p.readTime+dt:0;
+  if(p.readTime>=1.8)previewTurn(p.angle+180);
+ }else{
+  p.elapsed+=dt;const t=clamp(p.elapsed/p.duration,0,1),ease=t*t*(3-2*t);
+  p.angle=p.from+(p.target-p.from)*ease;manual(p.angle,true);
+  if(t===1){p.phase='settling';p.readTime=0;}
+ }
+}
+$('preview').addEventListener('click',()=>{
+ if(previewPlayback.active){stopPreview();return;}
+ const nearest=Math.round(angle/180)*180;
+ Object.assign(previewPlayback,{active:true,phase:'settling',angle,readTime:0});
+ if(Math.abs(nearest-angle)>.5)previewTurn((Math.floor(angle/180)+1)*180);
+ manual(angle,true);$('preview').textContent='暫停預覽';$('preview').setAttribute('aria-pressed','true');
+});
+function manual(a,previewInput=false){
+ if(!previewInput)stopPreview();
+ source=previewInput?'preview':'manual';const r=a*Math.PI/180;desiredX=poseX=Math.sin(r);desiredY=poseY=Math.cos(r);
+ const signed=wrap(a);$('tilt').value=signed===-180&&a>0?180:signed;
+ $('hint').textContent=previewInput?'正在預覽：泡泡成字後，再轉向另一句。':'慢轉、快轉、停住或反向，泡泡都會從這裡繼續浮。';if(sensorEnabled)$('enable').textContent='恢復傾斜';
+}
+$('tilt').addEventListener('input',e=>manual(Number(e.target.value)));
+let pointer=null;
+canvas.addEventListener('pointerdown',e=>{stopPreview();pointer={id:e.pointerId,x:e.clientX,angle};canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener('pointermove',e=>{if(pointer&&pointer.id===e.pointerId)manual(pointer.angle+(e.clientX-pointer.x)*.8);});
+canvas.addEventListener('pointerup',()=>pointer=null);canvas.addEventListener('pointercancel',()=>pointer=null);
+canvas.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key))return;e.preventDefault();manual(e.key==='ArrowUp'?180:e.key==='ArrowDown'||e.key===' '?0:angle+(e.key==='ArrowLeft'?-10:10));});
+function gravity(beta,gamma){const b=beta*Math.PI/180,g=gamma*Math.PI/180;return{x:Math.cos(b)*Math.sin(g),y:Math.sin(b),z:Math.cos(b)*Math.cos(g)};}
+const cross=(a,b)=>({x:a.y*b.z-a.z*b.y,y:a.z*b.x-a.x*b.z,z:a.x*b.y-a.y*b.x});
+const screenAngle=()=>(screen.orientation?.angle??window.orientation??0)*Math.PI/180;
+function sensorGravity(beta,gamma,a=screenAngle()){
+ let v=gravity(beta,gamma);
+ if(baseline){const k=baseline.cross,d=baseline.dot,kv=cross(k,v),kkv=cross(k,kv);v={x:v.x+kv.x+kkv.x/(1+d),y:v.y+kv.y+kkv.y/(1+d),z:v.z+kv.z+kkv.z/(1+d)};}
+ return{x:clamp(v.x*Math.cos(a)+v.y*Math.sin(a),-1,1),y:clamp(v.y*Math.cos(a)-v.x*Math.sin(a),-1,1)};
+}
+function beginCalibration(){
+ calibrating=true;sensorReady=false;samples=[];desiredX=poseX=0;desiredY=poseY=1;bodyAngle=omega=alpha=0;
+ $('calibrate').disabled=true;$('enable').textContent='等待正拿感測';$('hint').textContent='請直式正拿、螢幕朝向自己，保持片刻。';
+}
+function uprightSample(){
+ const a=screenAngle(),v=gravity(latest.beta,latest.gamma),now=performance.now(),x=v.x*Math.cos(a)+v.y*Math.sin(a),y=v.y*Math.cos(a)-v.x*Math.sin(a);
+ if(y<.72||Math.abs(x)>.45){samples=[];return false;}
+ const first=samples[0];if(first&&(first.a!==a||Math.hypot(v.x-first.v.x,v.y-first.v.y,v.z-first.v.z)>.075))samples=[];
+ samples.push({v,a,at:now});if(samples.length<6||now-samples[0].at<120)return false;
+ const from=samples.reduce((s,p)=>({x:s.x+p.v.x,y:s.y+p.v.y,z:s.z+p.v.z}),{x:0,y:0,z:0}),length=Math.hypot(from.x,from.y,from.z);
+ from.x/=length;from.y/=length;from.z/=length;const to={x:-Math.sin(a),y:Math.cos(a),z:0};
+ baseline={angle:a,cross:cross(from,to),dot:from.x*to.x+from.y*to.y+from.z*to.z};
+ calibrating=false;sensorReady=true;samples=[];$('hint').textContent='正拿已校正。慢慢轉動箱子，讓泡泡浮向新的天花板。';return true;
+}
+function orientation(e){
+ if(!Number.isFinite(e.beta)||!Number.isFinite(e.gamma))return;latest={beta:e.beta,gamma:e.gamma};
+ if(!sensorEnabled||source!=='sensor')return;clearTimeout(sensorTimer);
+ if(calibrating&&!uprightSample())return;if(!sensorReady)return;
+ const v=sensorGravity(e.beta,e.gamma),pose=sensorGravity(e.beta,e.gamma,baseline?.angle??0);
+ desiredX=v.x;desiredY=v.y;poseX=pose.x;poseY=pose.y;
+ $('enable').textContent='傾斜已啟用';$('calibrate').disabled=false;
+}
+$('enable').addEventListener('click',async()=>{
+ stopPreview();
+ if(sensorEnabled){source='sensor';if(sensorReady&&latest)orientation(latest);else beginCalibration();return;}
+ if(!window.isSecureContext){$('hint').textContent='手機感測需要 HTTPS；現在可以拖曳或使用滑桿。';return;}
+ if(!window.DeviceOrientationEvent){$('hint').textContent='此瀏覽器沒有姿態感測，請使用拖曳或滑桿。';return;}
+ try{
+  if(typeof DeviceOrientationEvent.requestPermission==='function'&&await DeviceOrientationEvent.requestPermission()!=='granted'){$('hint').textContent='尚未取得感測授權；可以使用拖曳或滑桿。';return;}
+  sensorEnabled=true;source='sensor';latest=null;baseline=null;beginCalibration();window.addEventListener('deviceorientation',orientation);
+  sensorTimer=setTimeout(()=>{if(!latest){sensorEnabled=false;source='opening';calibrating=false;window.removeEventListener('deviceorientation',orientation);$('enable').textContent='重試傾斜';$('hint').textContent='沒有收到姿態訊號；可以拖曳或使用滑桿。';}},3500);
+ }catch{$('hint').textContent='無法取得感測授權；可以拖曳或使用滑桿。';}
+});
+$('calibrate').addEventListener('click',()=>{stopPreview();if(sensorEnabled){source='sensor';beginCalibration();}});
+// Only hide the overlay controls; keep the canvas, input source and simulation alive.
+$('toggleControls').addEventListener('click',()=>{
+ const panel=$('controlPanel'),toggle=$('toggleControls');
+ panel.hidden=!panel.hidden;
+ toggle.closest('footer').classList.toggle('controls-collapsed',panel.hidden);
+ toggle.setAttribute('aria-expanded',String(!panel.hidden));
+ toggle.textContent=panel.hidden?'展開控制':'收合控制';
+});
+function screenChanged(){if(calibrating){samples=[];return;}if(sensorEnabled&&source==='sensor'&&latest)orientation(latest);}
+screen.orientation?.addEventListener?.('change',screenChanged);window.addEventListener('orientationchange',screenChanged);
+$('helpButton').addEventListener('click',()=>{$('help').showModal();running=false;});
+$('closeHelp').addEventListener('click',()=>$('help').close());
+$('help').addEventListener('close',()=>{running=true;accumulator=0;last=performance.now();});
+document.addEventListener('visibilitychange',()=>{accumulator=0;last=performance.now();});
+const readyPromise=document.fonts.ready.then(()=>{resize();prepareDesignGeometry();draw();new ResizeObserver(resize).observe(canvas);window.visualViewport?.addEventListener('resize',resize);requestAnimationFrame(frame);});
+window.loveBubbles={
+ ready:readyPromise,
+ stats:()=>({count:particles.length,time,angle,mode,phrase:phrases[mode],rotation:masks[mode]?.rotation,buoyancy:{x:bx,y:by},gravity:{x:gx,y:gy},omega,alpha,adhesion:[...adhesion],bound:masks.map(m=>m.bound),maskArea:masks.map(m=>m.area),sites:masks.map(m=>m.sites.length),siteSizes:masks.map(m=>[0,1,2].map(c=>m.sites.filter(t=>t.sizeClass===c).length)),coverage:masks.map(m=>m.bound/m.sites.length),width:W,height:H,moving,frameMs,captures,releases,invalidCaptures,maxCaptureJump,wallContacts,source,sensorReady,calibrating}),
+ snapshot:()=>particles.map(p=>({id:p.id,x:p.x,y:p.y,vx:p.vx,vy:p.vy,r:p.r,depth:p.depth,screenX:clamp(p.x+(p.depth-.5)*viewX,p.r,W-p.r),screenY:clamp(p.y+(p.depth-.5)*viewY,p.r,H-p.r),site:p.site,sizeClass:p.sizeClass,opacity:1,bound:p.bound,anchorX:p.anchorX,anchorY:p.anchorY,travel:p.travel,compression:p.compression}))
+};
+if(qaMode)Object.assign(window.loveBubbles,{
+ membraneState:()=>particles.map(p=>({id:p.id,...membraneStates.get(p.id)})),
+ designInfo:()=>({ready:designReady,source:'vector contours only',glyphs:designShapes.map(row=>row.map(g=>({width:g.w,height:g.h,unit:g.unit,counters:g.source.counters.length,patches:g.seeds.length})))}),
+ previewState:()=>({...previewPlayback}),
+ releases:()=>releaseLog.map(e=>({...e})),
+ microSnapshot:()=>microBubbles.map(p=>({id:p.id,x:p.x,y:p.y,vx:p.vx,vy:p.vy,r:p.r,depth:p.depth,light:(.72+p.depth*.28)*.42,opacity:1})),
+ envelopes:letteringEnvelopes,
+ step(frames=1){running=false;for(let i=0;i<frames*2;i++){updatePreview(DT);physics();}draw();ui();},
+ pause(){running=false;},resume(){running=true;accumulator=0;last=performance.now();},
+ setAngle:manual,sensor:orientation,
+ glyphs:()=>masks.map(m=>m.glyphs.map(b=>({id:b.id,x:b.x,y:b.y,vx:b.vx,vy:b.vy,tilt:b.tilt,tiltDegrees:b.tilt*180/Math.PI,spin:b.spin,maxTilt:b.maxTilt,startX:b.startX,startY:b.startY,startTilt:b.startTilt,active:b.active,formedAt:b.formedAt,bound:b.sites.filter(id=>m.sites[id].owner>=0).length,count:b.sites.length,bounds:{left:b.left,right:b.right,top:b.top,bottom:b.bottom},contacts:b.contacts.map(c=>({...c}))}))),
+ maskData:()=>masks.map(m=>{
+  const ink=new Uint8Array(W*Math.ceil(H));
+  for(const s of m.sites)for(let y=Math.max(0,Math.floor(s.y-s.r));y<Math.min(H,s.y+s.r);y++)for(let x=Math.max(0,Math.floor(s.x-s.r));x<Math.min(W,s.x+s.r);x++)if(norm(x+.5-s.x,y+.5-s.y)<s.r)ink[y*W+x]=1;
+  return {ink:Array.from(ink),rotation:m.rotation,width:W,height:Math.ceil(H),fontSize:m.fontSize,sites:m.sites.map(t=>({...t}))};
+ }),
+ shapes:()=>particles.map(p=>({id:p.id,sizeClass:p.sizeClass,r:p.r,bound:p.bound,wobbleAmp:p.wobbleAmp,wobbleRate:p.wobbleRate,squash:Array.from(p.squash),loads:Array.from(p.loads)})),
+ outlineAt:(id,t=time)=>outline(particles[id],t)
+});
+})();
+</script>
+</body>
+</html>
